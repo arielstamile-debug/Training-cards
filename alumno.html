@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mi Rutina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter','Helvetica Neue',sans-serif;min-height:100vh;transition:background .3s}
+.page-header{padding:20px 20px 0}
+.back-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;opacity:.5;margin-bottom:20px}
+.back-tag svg{width:12px;height:12px}
+.card{margin:0 16px 32px;border-radius:16px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.08)}
+.card-header{padding:20px 20px 18px;display:flex;align-items:center;justify-content:space-between}
+.card-header-left{display:flex;align-items:center;gap:14px}
+.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0}
+.alumno-name{font-size:20px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.alumno-obj{font-size:12px;font-weight:500;margin-top:3px;opacity:.75}
+.semana-badge{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.progress-wrap{padding:14px 20px}
+.progress-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.progress-label-text{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;opacity:.55}
+.progress-count{font-size:13px;font-weight:700}
+.progress-bar{height:5px;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+
+/* Exercise rows */
+.ex-list{padding:0 0 4px}
+.ex-item{display:flex;align-items:flex-start;gap:12px;padding:14px 20px;border-bottom-width:1px;border-bottom-style:solid;transition:background .12s;user-select:none}
+.ex-item:last-child{border-bottom:none}
+.ex-item.done .ex-name{opacity:.4;text-decoration:line-through}
+.ex-item.done .ex-muscle{opacity:.3}
+.ex-item.done .ex-stats-row{opacity:.35}
+
+/* Checkbox — green when done */
+.ex-check{width:26px;height:26px;border-radius:8px;border-width:2px;border-style:solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;cursor:pointer;transition:all .18s}
+.ex-check svg{width:13px;height:13px;opacity:0;transition:opacity .15s}
+.ex-item.done .ex-check{background:#22c55e !important;border-color:#22c55e !important}
+.ex-item.done .ex-check svg{opacity:1}
+
+.ex-body{flex:1;min-width:0;cursor:pointer}
+.ex-name{font-size:14px;font-weight:600;line-height:1.2}
+.ex-muscle{font-size:11px;font-weight:500;margin-top:2px}
+
+/* Stats — horizontal row */
+.ex-stats-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.stat-chip{display:flex;flex-direction:column;align-items:center;padding:5px 10px;border-radius:8px;cursor:pointer;transition:all .15s;min-width:44px}
+.stat-chip:active{transform:scale(.94)}
+.stat-label{font-size:9px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;opacity:.5;margin-bottom:2px}
+.stat-value{font-size:12px;font-weight:700;line-height:1}
+
+/* Edit sheet */
+.edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.edit-sheet{border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px}
+.edit-sheet-title{font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.4;margin-bottom:16px;text-align:center}
+.edit-field{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.edit-field label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;opacity:.5}
+.edit-field input{width:100%;padding:14px;border-radius:12px;border:1.5px solid #e0e0e0;font-size:22px;font-weight:700;text-align:center;font-family:inherit;outline:none;transition:border .15s}
+.edit-field input:focus{border-color:#aaa}
+.edit-actions{display:flex;gap:10px}
+.edit-save{flex:1;padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff}
+.edit-cancel{padding:14px 20px;border:none;border-radius:12px;background:#f0f0f0;color:#666;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* Footer */
+.card-footer{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top-width:1px;border-top-style:solid}
+.footer-text{font-size:11px;opacity:.4;font-weight:500}
+.footer-reset{font-size:11px;font-weight:600;cursor:pointer;padding:6px 12px;border-radius:6px;border:none}
+
+/* All done — green circle checkmark */
+.all-done{display:none;flex-direction:column;align-items:center;padding:40px 20px;gap:14px;text-align:center}
+.all-done-circle{width:72px;height:72px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center}
+.all-done-circle svg{width:36px;height:36px}
+.all-done-title{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.all-done-sub{font-size:13px;opacity:.5}
+
+.error-page{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:32px;background:#f8f8f8;color:#333}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="edit-modal" style="display:none"></div>
+
+<script>
+const THEMES = {
+  musculacion: {
+    keys: ['musculacion','musculación','musculacion general','musculación general'],
+    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
+    accent:'#b8956a', headerBg:'#c8a45a', headerText:'#fff',
+    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
+    badgeBg:'rgba(255,255,255,.22)', badgeText:'#fff',
+    statBg:'#f0ede8', statText:'#8a6020', statText2:'#8a8278',
+    checkBorder:'#d8d0c0', rowBorder:'#f0ede8', rowDoneBg:'#faf8f5',
+    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5',
+    resetBg:'#e8e4de', resetText:'#8a8278',
+    progressTrack:'#e8e4de', progressFill:'#c8a45a',
+  },
+  fuerza: {
+    keys: ['fuerza'],
+    bg:'#f0f0f0', surface:'#fafafa', surface2:'#e8e8e8', border:'#d0d0d0',
+    accent:'#3a3a3a', headerBg:'#2e2e2e', headerText:'#f5f5f5',
+    text:'#1a1a1a', text2:'#707070', text3:'#a8a8a8',
+    badgeBg:'rgba(255,255,255,.12)', badgeText:'#f0f0f0',
+    statBg:'#e4e4e4', statText:'#3a3a3a', statText2:'#707070',
+    checkBorder:'#c0c0c0', rowBorder:'#d8d8d8', rowDoneBg:'#ececec',
+    footerBg:'#e4e4e4', footerBorder:'#d0d0d0', footerText:'#a8a8a8',
+    resetBg:'#d8d8d8', resetText:'#3a3a3a',
+    progressTrack:'#d8d8d8', progressFill:'#3a3a3a',
+  },
+  circuitos: {
+    keys: ['circuitos','circuito'],
+    bg:'#f5f0e8', surface:'#fffdf7', surface2:'#f0ebe0', border:'#ddd5c0',
+    accent:'#8b5e3c', headerBg:'#8b5e3c', headerText:'#fff',
+    text:'#2d1f0e', text2:'#8a6a50', text3:'#b89a80',
+    badgeBg:'rgba(255,255,255,.2)', badgeText:'#fff',
+    statBg:'#ede8dc', statText:'#8b5e3c', statText2:'#8a6a50',
+    checkBorder:'#c8b89a', rowBorder:'#e0d8c8', rowDoneBg:'#ede8dc',
+    footerBg:'#ede8dc', footerBorder:'#ddd5c0', footerText:'#b89a80',
+    resetBg:'#ddd5c0', resetText:'#8b5e3c',
+    progressTrack:'#ddd5c0', progressFill:'#8b5e3c',
+  },
+  acondicionamiento: {
+    keys: ['acondicionamiento'],
+    bg:'#e8f5f5', surface:'#f7fdfd', surface2:'#daf0f0', border:'#b8dede',
+    accent:'#0e7c7c', headerBg:'#0e7c7c', headerText:'#fff',
+    text:'#082828', text2:'#508a8a', text3:'#80b8b8',
+    badgeBg:'rgba(255,255,255,.2)', badgeText:'#fff',
+    statBg:'#d0ecec', statText:'#0e7c7c', statText2:'#508a8a',
+    checkBorder:'#90cccc', rowBorder:'#c0e4e4', rowDoneBg:'#daf0f0',
+    footerBg:'#d0ecec', footerBorder:'#b8dede', footerText:'#80b8b8',
+    resetBg:'#b8dede', resetText:'#0e7c7c',
+    progressTrack:'#b8dede', progressFill:'#0e7c7c',
+  }
+};
+
+function getTheme(obj) {
+  const o = (obj||'').toLowerCase().trim();
+  for (const k of Object.keys(THEMES)) {
+    if (THEMES[k].keys.some(x => o.includes(x)||x.includes(o))) return THEMES[k];
+  }
+  return THEMES.musculacion;
+}
+function getInitials(n){ return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function parseData() {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('d');
+    if (!raw) return null;
+    return JSON.parse(decodeURIComponent(atob(raw)));
+  } catch(e){ return null; }
+}
+
+let checked  = new Set();
+let overrides = {};
+
+function toggleEx(idx) {
+  if (checked.has(idx)) { checked.delete(idx); } else { checked.add(idx); }
+  updateUI();
+}
+
+function resetAll() {
+  checked.clear(); overrides = {};
+  updateUI();
+  window._DATA.ejercicios.forEach((ex,i) => renderStats(i, ex, window._THEME));
+}
+
+function getVal(i, f) {
+  return overrides[i] && overrides[i][f] !== undefined ? overrides[i][f] : window._DATA.ejercicios[i][f];
+}
+
+function renderStats(i, ex, t) {
+  const container = document.getElementById(`stats-${i}`);
+  if (!container) return;
+  const sr = getVal(i,'sr');
+  const r  = getVal(i,'r');
+  const c  = getVal(i,'c');
+  const tt = ex.tt || '';
+  const td = ex.td || '';
+
+  const chip = (label, value, field, color) => `
+    <div class="stat-chip" style="background:${t.statBg}" onclick="event.stopPropagation();openEdit(${i},'${field}',${typeof value==='number'?value:0})">
+      <span class="stat-label" style="color:${t.text2}">${label}</span>
+      <span class="stat-value" style="color:${color}">${value}</span>
+    </div>`;
+
+  const timeChip = (label, value) => value ? `
+    <div class="stat-chip" style="background:${t.statBg};cursor:default">
+      <span class="stat-label" style="color:${t.text2}">${label}</span>
+      <span class="stat-value" style="color:${t.statText2}">${value}</span>
+    </div>` : '';
+
+  container.innerHTML =
+    chip('Series', `${sr}×`, 'sr', t.statText) +
+    chip('Reps', r > 0 ? r : '—', 'r', t.statText2) +
+    chip('Carga', c > 0 ? `${c}kg` : '—', 'c', t.statText2) +
+    timeChip('T. Trabajo', tt) +
+    timeChip('T. Descanso', td);
+}
+
+function openEdit(idx, field, currentVal) {
+  const t = window._THEME;
+  const labels = { sr:'Series', r:'Reps', c:'Carga (kg)' };
+  const modal = document.getElementById('edit-modal');
+  modal.style.cssText = 'display:flex;align-items:flex-end;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100';
+  modal.innerHTML = `
+    <div class="edit-sheet" style="background:${t.surface}">
+      <div class="edit-sheet-title" style="color:${t.text}">Ajustar ${labels[field]}</div>
+      <div class="edit-field">
+        <label style="color:${t.text2}">${labels[field]}</label>
+        <input id="edit-input" type="number" value="${currentVal}" min="0" step="${field==='c'?'0.5':'1'}"
+          style="border-color:${t.border};color:${t.text};background:${t.surface2}">
+      </div>
+      <div class="edit-actions">
+        <button class="edit-save" style="background:${t.accent}" onclick="saveEdit(${idx},'${field}')">Guardar</button>
+        <button class="edit-cancel" onclick="closeEdit()">Cancelar</button>
+      </div>
+    </div>`;
+  setTimeout(()=>document.getElementById('edit-input').focus(),100);
+  modal.onclick = e => { if(e.target===modal) closeEdit(); };
+}
+
+function saveEdit(idx, field) {
+  const val = parseFloat(document.getElementById('edit-input').value);
+  if (!isNaN(val)) {
+    if (!overrides[idx]) overrides[idx] = {};
+    overrides[idx][field] = val;
+    renderStats(idx, window._DATA.ejercicios[idx], window._THEME);
+  }
+  closeEdit();
+}
+function closeEdit() { document.getElementById('edit-modal').style.display='none'; }
+
+function updateUI() {
+  const data = window._DATA, t = window._THEME;
+  const total = data.ejercicios.length, done = checked.size;
+  document.getElementById('prog-count').textContent = `${done}/${total}`;
+  document.getElementById('prog-fill').style.width  = `${(done/total)*100}%`;
+
+  data.ejercicios.forEach((ex,i) => {
+    const item = document.getElementById(`ex-${i}`);
+    const chk  = document.getElementById(`chk-${i}`);
+    if (!item||!chk) return;
+    if (checked.has(i)) {
+      item.classList.add('done');
+      item.style.background  = t.rowDoneBg;
+      chk.style.background   = '#22c55e';
+      chk.style.borderColor  = '#22c55e';
+    } else {
+      item.classList.remove('done');
+      item.style.background  = '';
+      chk.style.background   = 'transparent';
+      chk.style.borderColor  = t.checkBorder;
+    }
+  });
+
+  const allDone = document.getElementById('all-done');
+  const exList  = document.getElementById('ex-list');
+  if (done===total && total>0) {
+    allDone.style.display='flex'; exList.style.display='none';
+  } else {
+    allDone.style.display='none'; exList.style.display='block';
+  }
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const data = parseData();
+  if (!data) {
+    app.innerHTML=`<div class="error-page"><div style="font-size:48px">🔗</div><div style="font-size:18px;font-weight:700">Link inválido</div><div style="font-size:13px;color:#888;max-width:280px;line-height:1.6">Pedile al entrenador que genere un nuevo link.</div></div>`;
+    return;
+  }
+  window._DATA  = data;
+  window._THEME = getTheme(data.objetivo);
+  const t = window._THEME;
+  document.body.style.background = t.bg;
+  document.title = `Rutina · ${data.alumno}`;
+
+  app.innerHTML = `
+    <div style="max-width:480px;margin:0 auto;padding-bottom:40px">
+      <div class="page-header">
+        <div class="back-tag" style="color:${t.text}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          Training Cards
+        </div>
+      </div>
+      <div class="card" style="background:${t.surface};border:1px solid ${t.border}">
+
+        <div class="card-header" style="background:${t.headerBg}">
+          <div class="card-header-left">
+            <div class="avatar" style="background:rgba(0,0,0,.15);color:${t.headerText}">${getInitials(data.alumno)}</div>
+            <div>
+              <div class="alumno-name" style="color:${t.headerText}">${data.alumno}</div>
+              <div class="alumno-obj" style="color:${t.headerText}">${data.objetivo||''}</div>
+            </div>
+          </div>
+          <div class="semana-badge" style="background:${t.badgeBg};color:${t.badgeText}">Sem ${data.semana} · Día ${data.dia}</div>
+        </div>
+
+        <div class="progress-wrap" style="background:${t.surface}">
+          <div class="progress-label">
+            <span class="progress-label-text" style="color:${t.text2}">Progreso</span>
+            <span class="progress-count" id="prog-count" style="color:${t.accent}">0/${data.ejercicios.length}</span>
+          </div>
+          <div class="progress-bar" style="background:${t.progressTrack}">
+            <div class="progress-fill" id="prog-fill" style="width:0%;background:${t.progressFill}"></div>
+          </div>
+        </div>
+
+        <div id="ex-list" class="ex-list">
+          ${data.ejercicios.map((ex,i)=>`
+            <div class="ex-item" id="ex-${i}" style="border-bottom-color:${t.rowBorder}" onclick="toggleEx(${i})">
+              <div class="ex-check" id="chk-${i}" style="border-color:${t.checkBorder}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div class="ex-body">
+                <div class="ex-name" style="color:${t.text}">${ex.e}</div>
+                <div class="ex-muscle" style="color:${t.text2}">${(ex.m||'').toLowerCase()}</div>
+                <div class="ex-stats-row" id="stats-${i}"></div>
+              </div>
+            </div>`).join('')}
+        </div>
+
+        <div id="all-done" class="all-done">
+          <div class="all-done-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="all-done-title" style="color:${t.text}">¡Rutina completada!</div>
+          <div class="all-done-sub" style="color:${t.text2}">Completaste los ${data.ejercicios.length} ejercicios del día.</div>
+        </div>
+
+        <div class="card-footer" style="background:${t.footerBg};border-top-color:${t.footerBorder}">
+          <span class="footer-text" style="color:${t.footerText}">Training Cards · Ariel Stamile</span>
+          <button class="footer-reset" style="background:${t.resetBg};color:${t.resetText};border:none"
+            onclick="event.stopPropagation();resetAll()">Reiniciar</button>
+        </div>
+      </div>
+    </div>`;
+
+  data.ejercicios.forEach((ex,i) => renderStats(i, ex, t));
+  updateUI();
+}
+
+render();
+</script>
+</body>
+</html>

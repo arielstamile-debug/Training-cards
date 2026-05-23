@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:100vh;transition:background .3s}
+.app{display:flex;min-height:100vh}
+
+/* ── SIDEBAR (always dark) ── */
+.sidebar{width:272px;flex-shrink:0;background:#1a1a1a;border-right:1px solid #2e2e2e;padding:24px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-dot{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background .3s}
+.brand-dot svg{width:14px;height:14px}
+.brand-name{font-size:14px;font-weight:700;letter-spacing:-.3px;color:#f0f0f0}
+.brand-sub{font-size:10px;color:#666}
+.upload-zone{border:1.5px dashed #2e2e2e;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative}
+.upload-zone:hover{border-color:#c8f135}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:22px;margin-bottom:6px;opacity:.5}
+.upload-text strong{color:#c8f135;display:block;font-size:12px;margin-bottom:2px}
+.upload-text{font-size:11px;color:#888;line-height:1.5}
+.file-loaded{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#242424;border-radius:8px;border:1px solid #2e2e2e}
+.file-loaded-icon{width:28px;height:28px;background:rgba(200,241,53,.12);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.file-loaded-name{font-size:11px;color:#f0f0f0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-loaded-sub{font-size:10px;color:#666}
+.file-change{font-size:10px;color:#c8f135;cursor:pointer;margin-left:auto;flex-shrink:0}
+.filter-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#444;margin-bottom:4px}
+.filter-section{display:flex;flex-direction:column;gap:6px}
+.student-list{display:flex;flex-direction:column;gap:3px}
+.student-pill{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s;background:transparent;width:100%;text-align:left}
+.student-pill:hover{background:#242424}
+.pill-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;transition:all .3s}
+.pill-name{font-size:13px;font-weight:600;color:#f0f0f0}
+.pill-obj{font-size:10px;color:#666}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{padding:7px 12px;background:#242424;border:1px solid #2e2e2e;border-radius:8px;color:#666;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:#555;color:#f0f0f0}
+.placeholder-text{font-size:12px;color:#444;font-style:italic}
+.export-btn{margin-top:auto;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.export-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.url-btn{padding:11px;background:transparent;border:1px solid #2e2e2e;border-radius:8px;color:#888;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit}
+.url-btn:hover{border-color:#666;color:#ccc}
+.url-btn:disabled{opacity:.25;cursor:default;pointer-events:none}
+.url-btn svg{width:13px;height:13px}
+.export-btn svg{width:15px;height:15px}
+
+/* ── MAIN ── */
+.main{flex:1;padding:36px;display:flex;flex-direction:column;gap:28px;transition:background .3s}
+.main-title{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.1;transition:color .3s}
+.main-meta{font-size:13px;margin-top:5px;transition:color .3s}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:14px;text-align:center;opacity:.4}
+.welcome-icon{font-size:56px}
+.welcome-title{font-size:16px;font-weight:700}
+.welcome-sub{font-size:13px;max-width:300px;line-height:1.6}
+
+/* ── CARD ── */
+.card{border-radius:12px;overflow:hidden;max-width:660px;transition:all .3s}
+.card-header-bar{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;transition:background .3s}
+.card-header-left{display:flex;align-items:center;gap:12px}
+.card-avatar-big{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.card-alumno{font-size:18px;font-weight:800;letter-spacing:-.4px}
+.card-objetivo{font-size:11px;font-weight:500;margin-top:2px}
+.card-badge{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.ex-table{width:100%;border-collapse:collapse}
+.ex-table thead tr{}
+.ex-table th{padding:9px 20px;font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:left}
+.ex-table th:not(:first-child){text-align:center}
+.ex-table td{padding:11px 20px;border-bottom-width:1px;border-bottom-style:solid}
+.ex-table tr:last-child td{border-bottom:none}
+.ex-num{width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-right:8px;flex-shrink:0}
+.ex-name-cell{display:flex;align-items:center}
+.ex-name{font-size:13px;font-weight:600}
+.ex-muscle{font-size:10px;margin-top:1px}
+.ex-val{text-align:center;font-size:14px;font-weight:700}
+.card-footer{padding:12px 22px;display:flex;align-items:center;justify-content:space-between;border-top-width:1px;border-top-style:solid}
+.card-footer-text{font-size:11px}
+.card-footer-count{font-size:11px;font-weight:700}
+.empty{padding:48px 32px;text-align:center;font-size:14px}
+.error-msg{background:rgba(220,50,50,.1);border:1px solid rgba(220,50,50,.3);border-radius:8px;padding:12px 14px;font-size:12px;color:#ff8080;line-height:1.5}
+
+/* ── THEME BADGE on pill ── */
+.theme-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-dot" id="brand-dot">
+      <svg viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="4.5" height="12" rx="1.2" fill="#111"/>
+        <rect x="8" y="1" width="4.5" height="7" rx="1.2" fill="#111"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Training Cards</div>
+      <div class="brand-sub">Gestión de rutinas</div>
+    </div>
+  </div>
+
+  <div id="upload-area">
+    <div class="upload-zone">
+      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text">
+        <strong>Subí tu planilla Excel</strong>
+        Arrastrá o hacé clic para seleccionar
+      </div>
+    </div>
+  </div>
+
+  <div id="error-area"></div>
+
+  <div class="filter-section">
+    <div class="filter-label">Alumno</div>
+    <div class="student-list" id="student-list"><div class="placeholder-text">Cargá el Excel primero</div></div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">Semana</div>
+    <div class="filter-row" id="week-filters"><div class="placeholder-text">—</div></div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">Día</div>
+    <div class="filter-row" id="day-filters"><div class="placeholder-text">—</div></div>
+  </div>
+
+  <button class="export-btn" id="export-btn" onclick="exportPDF()" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Exportar PDF
+  </button>
+  <button class="url-btn" id="url-btn" onclick="generateURL()" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+    </svg>
+    Generar URL alumno
+  </button>
+</aside>
+
+<!-- URL MODAL -->
+<div id="url-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:24px">
+  <div id="url-modal-box" style="background:#fff;border-radius:20px;padding:28px 24px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-size:17px;font-weight:700;color:#111;margin-bottom:4px" id="modal-title">Link de rutina</div>
+    <div style="font-size:13px;color:#888;margin-bottom:20px" id="modal-sub">Mandá este link al alumno por WhatsApp</div>
+    <div style="background:#f4f4f4;border-radius:10px;padding:14px 16px;font-size:13px;color:#444;word-break:break-all;line-height:1.6;font-family:monospace;margin-bottom:16px" id="modal-url">Generando...</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="copyURL()" id="copy-btn" style="flex:1;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copiar link
+      </button>
+      <button onclick="closeModal()" style="padding:13px 18px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="main" id="main-area">
+  <div>
+    <div class="main-title" id="main-title">Training <span id="title-accent">Cards</span></div>
+    <div class="main-meta" id="main-meta">Cargá tu planilla Excel para comenzar</div>
+  </div>
+  <div id="card-area">
+    <div class="welcome">
+      <div class="welcome-icon">🏋️</div>
+      <div class="welcome-title">Ninguna planilla cargada</div>
+      <div class="welcome-sub">Subí tu Excel. Cada pestaña con el nombre del alumno se carga automáticamente.</div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+// ── THEMES ────────────────────────────────────────────────────────────────
+// Each theme: { key (matches objetivo lowercase), label, dark (bool),
+//   bg, surface, surface2, border, accent, accentHover,
+//   text, text2, text3,
+//   headerBg, headerText, headerSub, badgeBg, badgeText,
+//   tableHead, tableRow1, tableRow2, tableBorder, tableText, tableText2,
+//   numBg, numText, accentVal,
+//   footerBg, footerBorder, footerText, footerCount,
+//   btnBg, btnText, btnHover,
+//   dot (sidebar indicator color)
+//   pdf: { bg, accent, accentR,accentG,accentB, rowEven, rowOdd, headerBg, textMain, textSub, textMuted, footerText }
+// }
+const THEMES = {
+  musculacion: {
+    keys: ['musculacion','musculación','musculacion general','musculación general'],
+    dark: false,
+    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
+    accent:'#b8956a', accentHover:'#9a7a54',
+    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
+    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
+    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
+    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#b8956a',
+    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#b8956a',
+    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
+    dot:'#b8956a',
+    headerAccentLine:'#b8956a',
+    pdf:{ accentR:184,accentG:149,accentB:106, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
+  },
+  fuerza: {
+    keys: ['fuerza'],
+    dark: false,
+    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
+    accent:'#2a2a2a', accentHover:'#111111',
+    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
+    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
+    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
+    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#2a2a2a',
+    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#2a2a2a',
+    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
+    dot:'#2a2a2a',
+    headerAccentLine:'#2a2a2a',
+    pdf:{ accentR:42,accentG:42,accentB:42, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
+  },
+  circuitos: {
+    keys: ['circuitos','circuito'],
+    dark: false,
+    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
+    accent:'#8b6914', accentHover:'#6b5010',
+    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
+    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
+    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
+    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#8b6914',
+    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#8b6914',
+    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
+    dot:'#8b6914',
+    headerAccentLine:'#8b6914',
+    pdf:{ accentR:139,accentG:105,accentB:20, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
+  },
+  acondicionamiento: {
+    keys: ['acondicionamiento'],
+    dark: false,
+    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
+    accent:'#4a7c6f', accentHover:'#3a6058',
+    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
+    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
+    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
+    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#4a7c6f',
+    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#4a7c6f',
+    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
+    dot:'#4a7c6f',
+    headerAccentLine:'#4a7c6f',
+    pdf:{ accentR:74,accentG:124,accentB:111, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
+  }
+};
+
+function getTheme(objetivo) {
+  const o = (objetivo||'').toLowerCase().trim();
+  for (const key of Object.keys(THEMES)) {
+    if (THEMES[key].keys.some(k => o.includes(k) || k.includes(o))) return THEMES[key];
+  }
+  return THEMES.musculacion;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let DB = {}, selAlumno = null, selSemana = null, selDia = null, fileName = '';
+
+const SKIP = ['exercise library','data','datos','hoja1','sheet1','resumen','config'];
+
+function normalizeKey(col) {
+  const c = String(col).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if (c.includes('EJERCIC')) return 'EJERCICIO';
+  if (c.includes('GRUPO') || c === 'MUSCULO' || c.includes('MUSCULAR')) return 'MUSCULO';
+  if (c === 'SEMANA' || c === 'SEM') return 'SEMANA';
+  if (c === 'DIA') return 'DIA';
+  if (c === 'SERIES' || c === 'SR') return 'SERIES';
+  if (c.startsWith('REP')) return 'REPS';
+  if (c === 'CARGA' || c === 'KG' || c === 'PESO') return 'CARGA';
+  if (c.includes('TRABAJO')) return 'T_TRABAJO';
+  if (c.includes('DESCANSO')) return 'T_DESCANSO';
+  if (c === 'OBJETIVO' || c === 'OBJ') return 'OBJETIVO';
+  if (c === 'ALUMNO' || c === 'NOMBRE') return 'ALUMNO';
+  return c;
+}
+
+function formatTime(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const s = String(val).trim();
+  if (s === '' || s === '0' || s.toLowerCase() === 'nan') return '';
+
+  // Excel decimal fraction of day (e.g. 0.01388...)
+  const num = parseFloat(s);
+  if (!isNaN(num) && s.indexOf(':') === -1) {
+    if (num > 0 && num < 1) {
+      const totalSec = Math.round(num * 86400);
+      const mins = Math.floor(totalSec / 60);
+      const secs = totalSec % 60;
+      return `${mins}:${String(secs).padStart(2,'0')}`;
+    }
+    return '';
+  }
+
+  // Text format h:mm:ss or hh:mm:ss (e.g. "00:20:00", "0:01:30")
+  const parts = s.split(':');
+  if (parts.length === 3) {
+    const h  = parseInt(parts[0]) || 0;
+    const m  = parseInt(parts[1]) || 0;
+    const sc = parseInt(parts[2]) || 0;
+    const totalSec = h * 3600 + m * 60 + sc;
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins}:${String(secs).padStart(2,'0')}`;
+  }
+  // Already m:ss
+  if (parts.length === 2) return s;
+  return s;
+}
+
+function handleFile(file) {
+  if (!file) return;
+  fileName = file.name;
+  document.getElementById('error-area').innerHTML = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const objetivos = {};
+      const dataSheetName = wb.SheetNames.find(n => ['data','datos'].includes(n.toLowerCase()));
+      if (dataSheetName) {
+        XLSX.utils.sheet_to_json(wb.Sheets[dataSheetName], { defval: '' }).forEach(row => {
+          const n = {};
+          Object.keys(row).forEach(k => { n[normalizeKey(k)] = row[k]; });
+          const nombre = String(n['ALUMNO']||'').trim().toLowerCase();
+          const obj    = String(n['OBJETIVO']||'').trim();
+          if (nombre) objetivos[nombre] = obj;
+        });
+      }
+
+      DB = {};
+      const warnings = [];
+      wb.SheetNames.forEach(sheetName => {
+        if (SKIP.includes(sheetName.toLowerCase())) return;
+        const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
+        if (!rawRows.length) return;
+        const parsed = rawRows.map(row => {
+          const n = {};
+          Object.keys(row).forEach(k => { n[normalizeKey(k)] = row[k]; });
+          return n;
+        });
+        const sample = parsed[0];
+        if (!('SEMANA' in sample) || !('DIA' in sample) || !('EJERCICIO' in sample)) {
+          warnings.push(`Pestaña <strong>${sheetName}</strong>: faltan columnas (SEMANA, DIA, EJERCICIO)`);
+          return;
+        }
+        const rows = parsed
+          .filter(n => n['SEMANA']!=='' && n['DIA']!=='' && n['EJERCICIO']!=='')
+          .map(n => ({
+            s: parseInt(n['SEMANA'])||0, d: parseInt(n['DIA'])||0,
+            m: String(n['MUSCULO']||'').trim().toUpperCase(),
+            e: String(n['EJERCICIO']||'').trim().replace(/_/g,' '),
+            sr: parseFloat(n['SERIES']||0)||0,
+            r: parseFloat(n['REPS']||0)||0,
+            c: parseFloat(n['CARGA']||0)||0,
+            tt: formatTime(n['T_TRABAJO']),
+            td: formatTime(n['T_DESCANSO']),
+          })).filter(r => r.s>0 && r.d>0);
+        if (!rows.length) return;
+        const key = sheetName.toLowerCase();
+        const obj = objetivos[key]
+          || objetivos[Object.keys(objetivos).find(k=>k.includes(key)||key.includes(k))||'']
+          || '';
+        DB[sheetName] = { objetivo: obj, rows };
+      });
+
+      if (!Object.keys(DB).length) {
+        document.getElementById('error-area').innerHTML = `<div class="error-msg">No se encontraron pestañas válidas. Columnas requeridas: SEMANA, DIA, EJERCICIO, GRUPO MUSCULAR, SERIES, REPS, CARGA</div>`;
+        return;
+      }
+      if (warnings.length) document.getElementById('error-area').innerHTML = `<div class="error-msg">${warnings.join('<br>')}</div>`;
+
+      document.getElementById('upload-area').innerHTML = `
+        <div class="file-loaded">
+          <div class="file-loaded-icon">📊</div>
+          <div style="flex:1;min-width:0">
+            <div class="file-loaded-name">${fileName}</div>
+            <div class="file-loaded-sub">${Object.keys(DB).length} alumno${Object.keys(DB).length!==1?'s':''} cargado${Object.keys(DB).length!==1?'s':''}</div>
+          </div>
+          <span class="file-change" onclick="resetFile()">Cambiar</span>
+        </div>`;
+
+      const first = Object.keys(DB)[0];
+      selAlumno = first;
+      selSemana = getSemanas(first)[0];
+      selDia    = getDias(first, selSemana)[0];
+      renderSidebar(); renderCard();
+      document.getElementById('export-btn').disabled = false;
+      document.getElementById('url-btn').disabled = false;
+    } catch(err) {
+      document.getElementById('error-area').innerHTML = `<div class="error-msg">Error al leer el archivo: ${err.message}</div>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function resetFile() {
+  DB={}; selAlumno=null; selSemana=null; selDia=null; fileName='';
+  document.getElementById('upload-area').innerHTML = `
+    <div class="upload-zone">
+      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text"><strong>Subí tu planilla Excel</strong>Arrastrá o hacé clic para seleccionar</div>
+    </div>`;
+  document.getElementById('error-area').innerHTML='';
+  document.getElementById('student-list').innerHTML='<div class="placeholder-text">Cargá el Excel primero</div>';
+  document.getElementById('week-filters').innerHTML='<div class="placeholder-text">—</div>';
+  document.getElementById('day-filters').innerHTML='<div class="placeholder-text">—</div>';
+  document.getElementById('card-area').innerHTML=`<div class="welcome"><div class="welcome-icon">🏋️</div><div class="welcome-title">Ninguna planilla cargada</div><div class="welcome-sub">Subí tu Excel para comenzar.</div></div>`;
+  document.getElementById('main-title').innerHTML='Training <span id="title-accent">Cards</span>';
+  document.getElementById('main-meta').textContent='Cargá tu planilla Excel para comenzar';
+  document.getElementById('export-btn').disabled=true;
+  applyTheme(THEMES.musculacion);
+}
+
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{
+  e.preventDefault();
+  const f=e.dataTransfer.files[0];
+  if(f&&/\.(xlsx|xls)$/i.test(f.name)) handleFile(f);
+});
+
+function getInitials(n){ return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function getSemanas(a){ return [...new Set(DB[a].rows.map(r=>r.s))].sort((a,b)=>a-b); }
+function getDias(a,s){ return [...new Set(DB[a].rows.filter(r=>r.s===s).map(r=>r.d))].sort((a,b)=>a-b); }
+
+// ── APPLY THEME ───────────────────────────────────────────────────────────
+function applyTheme(t) {
+  const main = document.getElementById('main-area');
+  main.style.background = t.bg;
+  document.getElementById('brand-dot').style.background = t.accent;
+
+  // export btn
+  const btn = document.getElementById('export-btn');
+  btn.style.background = t.btnBg;
+  btn.style.color = t.btnText;
+
+  // week/day active buttons
+  document.querySelectorAll('.filter-btn.active').forEach(b => {
+    b.style.borderColor = t.accent;
+    b.style.color = t.accent;
+  });
+}
+
+// ── RENDER SIDEBAR ────────────────────────────────────────────────────────
+function renderSidebar() {
+  const t = selAlumno ? getTheme(DB[selAlumno].objetivo) : THEMES.musculacion;
+
+  document.getElementById('student-list').innerHTML = Object.keys(DB).map(name => {
+    const nt = getTheme(DB[name].objetivo);
+    const active = selAlumno===name;
+    return `<button class="student-pill ${active?'active':''}"
+      style="${active ? `background:#ffffff18;border-color:${nt.accent}` : ''}"
+      onclick="selectAlumno('${name.replace(/'/g,"\\'")}')">
+      <div class="pill-avatar" style="background:${nt.dot}22;color:${nt.dot};font-weight:700">
+        ${getInitials(name)}
+      </div>
+      <div>
+        <div class="pill-name" style="color:#f0f0f0;font-weight:${active?'700':'500'}">${name}</div>
+        <div class="pill-obj" style="color:#666">${DB[name].objetivo||'Sin objetivo'}</div>
+      </div>
+      <div class="theme-dot" style="background:${nt.dot}"></div>
+    </button>`;
+  }).join('');
+
+  document.getElementById('week-filters').innerHTML = selAlumno
+    ? getSemanas(selAlumno).map(s=>`
+        <button class="filter-btn ${selSemana===s?'active':''}"
+          style="${selSemana===s?`border-color:${t.accent};color:${t.accent}`:''}"
+          onclick="selectSemana(${s})">S${s}</button>`).join('')
+    : '<div class="placeholder-text">—</div>';
+
+  document.getElementById('day-filters').innerHTML = (selAlumno&&selSemana!==null)
+    ? getDias(selAlumno,selSemana).map(d=>`
+        <button class="filter-btn ${selDia===d?'active':''}"
+          style="${selDia===d?`border-color:${t.accent};color:${t.accent}`:''}"
+          onclick="selectDia(${d})">D${d}</button>`).join('')
+    : '<div class="placeholder-text">—</div>';
+
+  applyTheme(t);
+}
+
+// ── RENDER CARD ───────────────────────────────────────────────────────────
+function renderCard() {
+  const area  = document.getElementById('card-area');
+  const title = document.getElementById('main-title');
+  const meta  = document.getElementById('main-meta');
+
+  if (!selAlumno) return;
+
+  const t = getTheme(DB[selAlumno].objetivo);
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
+
+  title.innerHTML = `<span style="color:${t.text}">${selAlumno} — </span><span style="color:${t.accent}">Semana ${selSemana}, Día ${selDia}</span>`;
+  meta.style.color = t.text2;
+  meta.textContent = `${DB[selAlumno].objetivo||'Sin objetivo'} · ${ejercicios.length} ejercicio${ejercicios.length!==1?'s':''}`;
+
+  document.getElementById('main-area').style.background = t.bg;
+
+  if (!ejercicios.length) {
+    area.innerHTML = `<div class="card" style="background:${t.surface};border:1px solid ${t.border}"><div class="empty" style="color:${t.text2}">Sin ejercicios para este día</div></div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="card" style="background:${t.surface};border:1px solid ${t.border};box-shadow:0 1px 4px rgba(0,0,0,.04)">
+      <div class="card-header-bar" style="background:${t.headerBg};border-bottom:1px solid ${t.border};position:relative">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:${t.accent};border-radius:0"></div>
+        <div class="card-header-left">
+          <div class="card-avatar-big" style="background:${t.accent}18;color:${t.accent};font-size:13px;font-weight:800">${getInitials(selAlumno)}</div>
+          <div>
+            <div class="card-alumno" style="color:${t.text};font-size:16px;font-weight:700;letter-spacing:-.4px">${selAlumno}</div>
+            <div class="card-objetivo" style="color:${t.text2};font-size:11px;font-weight:400">${DB[selAlumno].objetivo||''}</div>
+          </div>
+        </div>
+        <div class="card-badge" style="background:${t.accent}12;color:${t.accent};font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid ${t.accent}28">Sem ${selSemana} · Día ${selDia}</div>
+      </div>
+      <table class="ex-table">
+        <thead>
+          <tr style="background:${t.tableHead}">
+            <th style="color:${t.tableHeadText}">Ejercicio</th>
+            <th style="color:${t.tableHeadText}">Series</th>
+            <th style="color:${t.tableHeadText}">Reps</th>
+            <th style="color:${t.tableHeadText}">Carga</th>
+            <th style="color:${t.tableHeadText};line-height:1.3">Tiempo<br><span style="font-weight:400;font-size:9px">Trabajo</span></th>
+            <th style="color:${t.tableHeadText};line-height:1.3">Tiempo<br><span style="font-weight:400;font-size:9px">Descanso</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ejercicios.map((ex,i)=>`
+            <tr style="background:${i%2===0?t.tableRow1:t.tableRow2}" onmouseover="this.style.background='${t.surface2}'" onmouseout="this.style.background='${i%2===0?t.tableRow1:t.tableRow2}'">
+              <td style="border-bottom-color:${t.tableBorder}">
+                <div class="ex-name-cell">
+                  <span class="ex-num" style="background:${t.numBg};color:${t.numText}">${i+1}</span>
+                  <div>
+                    <div class="ex-name" style="color:${t.tableText}">${ex.e}</div>
+                    <div class="ex-muscle" style="color:${t.tableText2}">${ex.m.toLowerCase()}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="border-bottom-color:${t.tableBorder}"><div class="ex-val" style="color:${t.accentVal}">${ex.sr}</div></td>
+              <td style="border-bottom-color:${t.tableBorder}"><div class="ex-val" style="color:${t.tableText}">${ex.r>0?ex.r:'—'}</div></td>
+              <td style="border-bottom-color:${t.tableBorder}"><div class="ex-val" style="color:${t.tableText}">${ex.c>0?ex.c+' kg':'—'}</div></td>
+              <td style="border-bottom-color:${t.tableBorder};vertical-align:middle"><div class="ex-val" style="color:${t.tableText};font-size:12px;display:flex;align-items:center;justify-content:center;height:100%">${ex.tt||'—'}</div></td>
+              <td style="border-bottom-color:${t.tableBorder};vertical-align:middle"><div class="ex-val" style="color:${t.tableText};font-size:12px;display:flex;align-items:center;justify-content:center;height:100%">${ex.td||'—'}</div></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="card-footer" style="background:${t.footerBg};border-top-color:${t.footerBorder}">
+        <div class="card-footer-text" style="color:${t.footerText}">Training Cards · Ariel Stamile</div>
+        <div class="card-footer-count" style="color:${t.footerCount}">${ejercicios.length} ejercicios</div>
+      </div>
+    </div>`;
+}
+
+function selectAlumno(name) {
+  selAlumno=name; selSemana=getSemanas(name)[0]; selDia=getDias(name,selSemana)[0];
+  renderSidebar(); renderCard();
+}
+function selectSemana(s) {
+  selSemana=s; selDia=getDias(selAlumno,s)[0];
+  renderSidebar(); renderCard();
+}
+function selectDia(d) {
+  selDia=d; renderSidebar(); renderCard();
+}
+
+// ── GENERATE STUDENT URL ──────────────────────────────────────────────────
+async function generateURL() {
+  if (!selAlumno) return;
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
+  if (!ejercicios.length) { alert('No hay ejercicios para este día'); return; }
+
+  const payload = {
+    alumno:    selAlumno,
+    objetivo:  DB[selAlumno].objetivo || '',
+    semana:    selSemana,
+    dia:       selDia,
+    ejercicios: ejercicios.map(ex => ({
+      e: ex.e, m: ex.m, sr: ex.sr, r: ex.r, c: ex.c, tt: ex.tt, td: ex.td
+    }))
+  };
+
+  const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+  const base = window.location.href.replace(/[^/]*$/, '');
+  const longUrl = `${base}alumno.html?d=${encoded}`;
+
+  // Theme modal
+  const t = getTheme(DB[selAlumno].objetivo);
+  const box = document.getElementById('url-modal-box');
+  box.style.background = t.surface || '#fff';
+  const copyBtn = document.getElementById('copy-btn');
+  copyBtn.style.background = t.headerBg || '#111';
+
+  document.getElementById('modal-title').textContent = `Rutina de ${selAlumno}`;
+  document.getElementById('modal-sub').textContent   = `Semana ${selSemana} · Día ${selDia} · ${ejercicios.length} ejercicios`;
+  // Store URL and show modal — button enabled from the start
+  window._currentURL = longUrl;
+  document.getElementById('modal-url').textContent = 'Generando link corto...';
+  document.getElementById('url-modal').style.display = 'flex';
+  copyBtn.disabled = false;
+  copyBtn.style.opacity = '1';
+  copyBtn.style.display = 'flex';
+
+  // Try is.gd in background
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`, { signal: ctrl.signal });
+    if (res.ok) {
+      const short = (await res.text()).trim();
+      if (short.startsWith('http')) {
+        window._currentURL = short;
+        document.getElementById('modal-url').textContent = short;
+      } else {
+        document.getElementById('modal-url').textContent = window._currentURL;
+      }
+    } else {
+      document.getElementById('modal-url').textContent = window._currentURL;
+    }
+  } catch(e) {
+    document.getElementById('modal-url').textContent = window._currentURL;
+  }
+}
+
+let _copyTimeout;
+function copyURL() {
+  const url = window._currentURL || '';
+  if (!url) return;
+  const btn = document.getElementById('copy-btn');
+
+  // Method 1: modern clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; }, 2000);
+    }).catch(() => fallbackCopy(url, btn));
+  } else {
+    fallbackCopy(url, btn);
+  }
+}
+
+function fallbackCopy(url, btn) {
+  // Method 2: create temp textarea and execCommand
+  const ta = document.createElement('textarea');
+  ta.value = url;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; }, 2000);
+  } catch(e) {
+    btn.textContent = 'Error — copiá manualmente';
+  }
+  document.body.removeChild(ta);
+}
+
+function closeModal() {
+  document.getElementById('url-modal').style.display = 'none';
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', e => {
+  const modal = document.getElementById('url-modal');
+  if (e.target === modal) closeModal();
+});
+
+// ── EXPORT PDF ────────────────────────────────────────────────────────────
+function exportPDF() {
+  if (!selAlumno) return;
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
+  if (!ejercicios.length) { alert('No hay ejercicios para exportar'); return; }
+
+  const t = getTheme(DB[selAlumno].objetivo);
+  const p = t.pdf;
+  const { jsPDF } = window.jspdf;
+
+  // Mobile card: 110mm wide (extra columns), dynamic height
+  const W   = 110;
+  const M   = 4;
+  const rH  = 13;
+  const headerH = 22;
+  const tableHeaderH = 8;
+  const footerH = 12;
+  const topPad = 5;
+
+  const totalH = topPad + headerH + tableHeaderH + (ejercicios.length * rH) + footerH + 6;
+
+  const doc = new jsPDF({ unit:'mm', format:[W, totalH], orientation:'portrait' });
+
+  // ── HEADER ──
+  doc.setFillColor(p.accentR, p.accentG, p.accentB);
+  doc.rect(0, 0, W, headerH + topPad, 'F');
+
+  doc.setFillColor(...p.avatarBg);
+  doc.circle(M + 5, topPad + 10, 6, 'F');
+  doc.setTextColor(...p.avatarText);
+  doc.setFontSize(6); doc.setFont('helvetica','bold');
+  doc.text(getInitials(selAlumno), M + 5, topPad + 11.5, {align:'center'});
+
+  doc.setFontSize(11); doc.setTextColor(255,255,255);
+  doc.text(selAlumno, M + 14, topPad + 8);
+
+  doc.setFontSize(6); doc.setFont('helvetica','normal');
+  doc.setGState(doc.GState({opacity:0.8}));
+  doc.text(DB[selAlumno].objetivo||'', M + 14, topPad + 13);
+  doc.setGState(doc.GState({opacity:1}));
+
+  doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+  doc.setGState(doc.GState({opacity:0.85}));
+  doc.text(`S${selSemana} · D${selDia}`, W - M - 1, topPad + 10, {align:'right'});
+  doc.setGState(doc.GState({opacity:1}));
+
+  // ── TABLE HEADER ──
+  let y = topPad + headerH;
+  doc.setFillColor(...p.headerBg);
+  doc.rect(0, y, W, tableHeaderH, 'F');
+  doc.setFontSize(5.5); doc.setFont('helvetica','bold'); doc.setTextColor(...p.textMuted);
+
+  // Column positions — 6 columns now
+  const cEx = M + 1;
+  const cSr = M + 42;
+  const cRp = M + 55;
+  const cCg = M + 68;
+  const cTt = M + 83;
+  const cTd = M + 98;
+
+  y += 5.5;
+  doc.text('EJERCICIO', cEx, y);
+  doc.text('SER', cSr, y, {align:'center'});
+  doc.text('REP', cRp, y, {align:'center'});
+  doc.text('KG',  cCg, y, {align:'center'});
+  doc.text('TRAB', cTt, y, {align:'center'});
+  doc.text('DESC', cTd, y, {align:'center'});
+
+  // ── ROWS ──
+  y += 3;
+  ejercicios.forEach((ex, i) => {
+    doc.setFillColor(...(i%2===0 ? p.rowEven : p.rowOdd));
+    doc.rect(0, y, W, rH, 'F');
+
+    doc.setFillColor(...p.headerBg);
+    doc.roundedRect(M, y + 2, 5.5, 5.5, 1, 1, 'F');
+    doc.setFontSize(5); doc.setFont('helvetica','bold'); doc.setTextColor(...p.textMuted);
+    doc.text(String(i+1), M + 2.75, y + 5.8, {align:'center'});
+
+    const maxChars = 20;
+    const exName = ex.e.length > maxChars ? ex.e.slice(0, maxChars) + '…' : ex.e;
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...p.textMain);
+    doc.text(exName, M + 8, y + 5);
+
+    doc.setFontSize(5); doc.setFont('helvetica','normal'); doc.setTextColor(...p.textSub);
+    doc.text(ex.m.toLowerCase(), M + 8, y + 9);
+
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(p.accentR, p.accentG, p.accentB);
+    doc.text(String(ex.sr), cSr, y + 7, {align:'center'});
+
+    doc.setTextColor(...p.textMain);
+    doc.text(ex.r > 0 ? String(ex.r) : '—', cRp, y + 7, {align:'center'});
+    doc.text(ex.c > 0 ? String(ex.c) : '—', cCg, y + 7, {align:'center'});
+
+    doc.setFontSize(6.5);
+    doc.text(ex.tt || '—', cTt, y + 7, {align:'center'});
+    doc.text(ex.td || '—', cTd, y + 7, {align:'center'});
+
+    y += rH;
+  });
+
+  // ── FOOTER ──
+  y += 2;
+  doc.setDrawColor(...p.headerBg); doc.setLineWidth(0.2);
+  doc.line(M, y, W - M, y);
+  y += 4;
+  doc.setFontSize(5.5); doc.setFont('helvetica','normal'); doc.setTextColor(...p.footerC);
+  doc.text('Training Cards · Ariel Stamile', M, y);
+  doc.text(`${ejercicios.length} ejercicios`, W - M, y, {align:'right'});
+
+  doc.save(`${selAlumno}_S${selSemana}_D${selDia}.pdf`);
+}
+</script>
+</body>
+</html>
