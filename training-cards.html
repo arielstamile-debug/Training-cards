@@ -617,11 +617,12 @@ async function generateURL() {
   copyBtn.style.opacity = '1';
   copyBtn.style.display = 'flex';
 
-  // Try is.gd in background
+  // Usar Worker de Cloudflare como intermediario (resuelve CORS)
   try {
     const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 6000);
-    const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`, { signal: ctrl.signal });
+    setTimeout(() => ctrl.abort(), 8000);
+    const workerUrl = `https://dawn-field-3f9b.arielstamile.workers.dev?url=${encodeURIComponent(longUrl)}`;
+    const res = await fetch(workerUrl, { signal: ctrl.signal });
     if (res.ok) {
       const short = (await res.text()).trim();
       if (short.startsWith('http')) {
