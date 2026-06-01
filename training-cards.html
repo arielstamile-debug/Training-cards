@@ -7,8 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:100vh;transition:background .3s}
@@ -108,12 +111,11 @@ body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:
   </div>
 
   <div id="upload-area">
-    <div class="upload-zone">
-      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-      <div class="upload-icon">📂</div>
-      <div class="upload-text">
-        <strong>Subí tu planilla Excel</strong>
-        Arrastrá o hacé clic para seleccionar
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#242424;border-radius:8px;border:1px solid #2e2e2e">
+      <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
+      <div>
+        <div style="font-size:11px;color:#f0f0f0;font-weight:600">Supabase conectado</div>
+        <div style="font-size:10px;color:#666" id="db-status">Cargando datos...</div>
       </div>
     </div>
   </div>
@@ -272,7 +274,55 @@ function getTheme(objetivo) {
 // ── STATE ─────────────────────────────────────────────────────────────────
 let DB = {}, selAlumno = null, selSemana = null, selDia = null, fileName = '';
 
-const SKIP = ['exercise library','data','datos','hoja1','sheet1','resumen','config'];
+async function loadFromSupabase() {
+  try {
+    document.getElementById('db-status').textContent = 'Cargando...';
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/Rutinas?select=*&order=ALUMNO,SEMANA,DIA`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if (!res.ok) throw new Error('Error ' + res.status);
+    const rows = await res.json();
+
+    DB = {};
+    rows.forEach(row => {
+      const nombre = String(row.ALUMNO || '').trim();
+      const objetivo = String(row.OBJETIVO || '').trim();
+      if (!nombre) return;
+      if (!DB[nombre]) DB[nombre] = { objetivo, rows: [] };
+      DB[nombre].rows.push({
+        s:  parseInt(row.SEMANA) || 0,
+        d:  parseInt(row.DIA)   || 0,
+        m:  String(row['GRUPO MUSCULAR'] || '').trim().toUpperCase(),
+        e:  String(row.EJERCICIO || '').trim().replace(/_/g,' '),
+        sr: parseFloat(row.SERIES) || 0,
+        r:  parseFloat(row.REPS)   || 0,
+        c:  parseFloat(row.CARGA)  || 0,
+        tt: String(row['TIEMPO TRABAJO']  || '').trim(),
+        td: String(row['TIEMPO DESCANSO'] || '').trim(),
+      });
+    });
+
+    const count = Object.keys(DB).length;
+    document.getElementById('db-status').textContent = `${count} alumno${count!==1?'s':''} cargado${count!==1?'s':''}`;
+
+    if (count > 0) {
+      const first = Object.keys(DB)[0];
+      selAlumno = first;
+      selSemana = getSemanas(first)[0];
+      selDia    = getDias(first, selSemana)[0];
+      renderSidebar(); renderCard();
+      document.getElementById('export-btn').disabled = false;
+      document.getElementById('url-btn').disabled = false;
+    }
+  } catch(e) {
+    document.getElementById('db-status').textContent = 'Error al conectar';
+    document.getElementById('db-status').style.color = '#ff6b6b';
+    console.error(e);
+  }
+}
 
 function normalizeKey(col) {
   const c = String(col).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -629,13 +679,13 @@ async function generateURL() {
         window._currentURL = short;
         document.getElementById('modal-url').textContent = short;
       } else {
-        document.getElementById('modal-url').textContent = window._currentURL;
+        document.getElementById('modal-url').textContent = 'Link listo ✓';
       }
     } else {
-      document.getElementById('modal-url').textContent = window._currentURL;
+      document.getElementById('modal-url').textContent = 'Link listo ✓';
     }
   } catch(e) {
-    document.getElementById('modal-url').textContent = window._currentURL;
+    document.getElementById('modal-url').textContent = 'Link listo ✓';
   }
 }
 
@@ -797,6 +847,9 @@ function exportPDF() {
 
   doc.save(`${selAlumno}_S${selSemana}_D${selDia}.pdf`);
 }
+
+// INIT
+loadFromSupabase();
 </script>
 </body>
 </html>
