@@ -89,6 +89,28 @@ body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:
 .empty{padding:48px 32px;text-align:center;font-size:14px}
 .error-msg{background:rgba(220,50,50,.1);border:1px solid rgba(220,50,50,.3);border-radius:8px;padding:12px 14px;font-size:12px;color:#ff8080;line-height:1.5}
 
+/* ── PLANNER ── */
+.planner{max-width:800px}
+.planner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.planner-title{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.planner-meta{font-size:13px;margin-top:4px}
+.month-block{margin-bottom:28px}
+.month-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e8e4de}
+.week-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:6px;background:#fff;border:1px solid #e8e4de;cursor:pointer;transition:all .15s}
+.week-row:hover{border-color:#c4bdb5}
+.week-row.active-week{border-color:#c8a45a;background:#fdf8f0}
+.week-label{font-size:13px;font-weight:700;color:#1a1714;width:36px;flex-shrink:0}
+.day-chips{display:flex;gap:6px;flex:1}
+.day-chip{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.day-chip.has-data{background:#f0ede8;color:#8a6020;border-color:#e8dfc8}
+.day-chip.has-data:hover{background:#e8dfc8}
+.day-chip.no-data{background:#f7f4ef;color:#c4bdb5;border-color:#e8e4de}
+.day-chip.no-data:hover{background:#f0ede8;color:#8a8278}
+.day-chip.selected{background:#c8a45a;color:#fff;border-color:#c8a45a}
+.week-count{font-size:11px;color:#c4bdb5;flex-shrink:0}
+.add-week-btn{width:100%;padding:10px;border:1.5px dashed #e8e4de;border-radius:10px;background:transparent;color:#c4bdb5;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;margin-top:4px}
+.add-week-btn:hover{border-color:#c8a45a;color:#c8a45a}
+
 /* ── THEME BADGE on pill ── */
 .theme-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto}
 </style>
@@ -121,6 +143,18 @@ body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:
   </div>
 
   <div id="error-area"></div>
+
+  <!-- VIEW TOGGLE -->
+  <div style="display:flex;gap:6px;margin-bottom:-8px">
+    <button id="btn-cards" onclick="switchView('cards')"
+      style="flex:1;padding:8px;border:1px solid #c8f135;border-radius:8px;background:#c8f135;color:#111;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+      Cards
+    </button>
+    <button id="btn-planner" onclick="switchView('planner')"
+      style="flex:1;padding:8px;border:1px solid #2e2e2e;border-radius:8px;background:transparent;color:#666;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+      Planificador
+    </button>
+  </div>
 
   <div class="filter-section">
     <div class="filter-label">Alumno</div>
@@ -180,10 +214,11 @@ body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:
   <div id="card-area">
     <div class="welcome">
       <div class="welcome-icon">🏋️</div>
-      <div class="welcome-title">Ninguna planilla cargada</div>
-      <div class="welcome-sub">Subí tu Excel. Cada pestaña con el nombre del alumno se carga automáticamente.</div>
+      <div class="welcome-title">Conectando a Supabase...</div>
+      <div class="welcome-sub">Los datos se cargan automáticamente.</div>
     </div>
   </div>
+  <div id="planner-area" style="display:none"></div>
 </main>
 </div>
 
@@ -293,15 +328,16 @@ async function loadFromSupabase() {
       if (!nombre) return;
       if (!DB[nombre]) DB[nombre] = { objetivo, rows: [] };
       DB[nombre].rows.push({
-        s:  parseInt(row.SEMANA) || 0,
-        d:  parseInt(row.DIA)   || 0,
-        m:  String(row['GRUPO MUSCULAR'] || '').trim().toUpperCase(),
-        e:  String(row.EJERCICIO || '').trim().replace(/_/g,' '),
-        sr: parseFloat(row.SERIES) || 0,
-        r:  parseFloat(row.REPS)   || 0,
-        c:  parseFloat(row.CARGA)  || 0,
-        tt: String(row['TIEMPO TRABAJO']  || '').trim(),
-        td: String(row['TIEMPO DESCANSO'] || '').trim(),
+        s:   parseInt(row.SEMANA) || 0,
+        d:   parseInt(row.DIA)   || 0,
+        mes: parseInt(row.MES)   || 1,
+        m:   String(row['GRUPO MUSCULAR'] || '').trim().toUpperCase(),
+        e:   String(row.EJERCICIO || '').trim().replace(/_/g,' '),
+        sr:  parseFloat(row.SERIES) || 0,
+        r:   parseFloat(row.REPS)   || 0,
+        c:   parseFloat(row.CARGA)  || 0,
+        tt:  String(row['TIEMPO TRABAJO']  || '').trim(),
+        td:  String(row['TIEMPO DESCANSO'] || '').trim(),
       });
     });
 
@@ -846,6 +882,104 @@ function exportPDF() {
   doc.text(`${ejercicios.length} ejercicios`, W - M, y, {align:'right'});
 
   doc.save(`${selAlumno}_S${selSemana}_D${selDia}.pdf`);
+}
+
+// ── VIEW SWITCHER ────────────────────────────────────────────────────────
+let currentView = 'cards';
+
+function switchView(view) {
+  currentView = view;
+  const btnCards   = document.getElementById('btn-cards');
+  const btnPlanner = document.getElementById('btn-planner');
+  const cardArea   = document.getElementById('card-area');
+  const planArea   = document.getElementById('planner-area');
+
+  if (view === 'cards') {
+    btnCards.style.background   = '#c8f135';
+    btnCards.style.color        = '#111';
+    btnCards.style.borderColor  = '#c8f135';
+    btnPlanner.style.background = 'transparent';
+    btnPlanner.style.color      = '#666';
+    btnPlanner.style.borderColor= '#2e2e2e';
+    cardArea.style.display  = 'block';
+    planArea.style.display  = 'none';
+  } else {
+    btnPlanner.style.background = '#c8f135';
+    btnPlanner.style.color      = '#111';
+    btnPlanner.style.borderColor= '#c8f135';
+    btnCards.style.background   = 'transparent';
+    btnCards.style.color        = '#666';
+    btnCards.style.borderColor  = '#2e2e2e';
+    cardArea.style.display  = 'none';
+    planArea.style.display  = 'block';
+    renderPlanner();
+  }
+}
+
+function renderPlanner() {
+  const area = document.getElementById('planner-area');
+  if (!selAlumno || !DB[selAlumno]) {
+    area.innerHTML = '<div class="empty">Seleccioná un alumno para ver su planificación</div>';
+    return;
+  }
+
+  const t    = getTheme(DB[selAlumno].objetivo);
+  const rows = DB[selAlumno].rows;
+
+  // Group by mes → semana → dia
+  const meses = {};
+  rows.forEach(r => {
+    const mes = r.mes || 1;
+    if (!meses[mes]) meses[mes] = {};
+    if (!meses[mes][r.s]) meses[mes][r.s] = new Set();
+    meses[mes][r.s].add(r.d);
+  });
+
+  // Get max dias per semana
+  const maxDias = Math.max(...rows.map(r => r.d), 4);
+
+  const totalSemanas = Object.values(meses).reduce((acc, sem) => acc + Object.keys(sem).length, 0);
+  const totalEjercicios = rows.length;
+
+  area.innerHTML = `
+    <div class="planner">
+      <div class="planner-header">
+        <div>
+          <div class="planner-title" style="color:${t.text}">${selAlumno}</div>
+          <div class="planner-meta" style="color:${t.text2}">${Object.keys(meses).length} meses · ${totalSemanas} semanas · ${totalEjercicios} ejercicios</div>
+        </div>
+      </div>
+      ${Object.keys(meses).sort((a,b)=>a-b).map(mes => `
+        <div class="month-block">
+          <div class="month-label">Mes ${mes}</div>
+          ${Object.keys(meses[mes]).sort((a,b)=>a-b).map(sem => {
+            const diasConData = meses[mes][sem];
+            const diasHtml = Array.from({length: maxDias}, (_,i) => i+1).map(d => {
+              const hasData = diasConData.has(d);
+              const isSelected = selSemana === parseInt(sem) && selDia === d;
+              return `<div class="day-chip ${hasData?'has-data':'no-data'}${isSelected?' selected':''}"
+                onclick="selectFromPlanner(${sem},${d})"
+                >D${d}</div>`;
+            }).join('');
+            const totalEx = rows.filter(r => r.s===parseInt(sem)).length;
+            return `
+              <div class="week-row ${selSemana===parseInt(sem)?'active-week':''}" style="border-color:${selSemana===parseInt(sem)?t.accent:'#e8e4de'}">
+                <div class="week-label" style="color:${t.text}">S${sem}</div>
+                <div class="day-chips">${diasHtml}</div>
+                <div class="week-count" style="color:${t.text2}">${totalEx} ej.</div>
+              </div>`;
+          }).join('')}
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function selectFromPlanner(sem, dia) {
+  selSemana = parseInt(sem);
+  selDia    = dia;
+  switchView('cards');
+  renderSidebar();
+  renderCard();
 }
 
 // INIT
