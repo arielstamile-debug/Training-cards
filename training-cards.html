@@ -312,7 +312,11 @@ let DB = {}, selAlumno = null, selSemana = null, selDia = null, fileName = '';
 async function loadFromSupabase() {
   try {
     document.getElementById('db-status').textContent = 'Cargando...';
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/Rutina?select=*&order=ALUMNO,SEMANA,DIA`, {
+
+    // Query con JOIN de las 3 tablas via PostgREST
+    const query = `${SUPABASE_URL}/rest/v1/ejercicios?select=*,sesiones(semana,dia,mes,fecha),alumnos(nombre,objetivo)&order=sesiones(semana),sesiones(dia)`;
+
+    const res = await fetch(query, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`
@@ -323,21 +327,26 @@ async function loadFromSupabase() {
 
     DB = {};
     rows.forEach(row => {
-      const nombre = String(row.ALUMNO || '').trim();
-      const objetivo = String(row.OBJETIVO || '').trim();
+      const alumno  = row.alumnos;
+      const sesion  = row.sesiones;
+      if (!alumno || !sesion) return;
+
+      const nombre  = String(alumno.nombre || '').trim();
+      const objetivo = String(alumno.objetivo || '').trim();
       if (!nombre) return;
+
       if (!DB[nombre]) DB[nombre] = { objetivo, rows: [] };
       DB[nombre].rows.push({
-        s:   parseInt(row.SEMANA) || 0,
-        d:   parseInt(row.DIA)   || 0,
-        mes: parseInt(row.MES)   || 1,
-        m:   String(row['GRUPO MUSCULAR'] || '').trim().toUpperCase(),
-        e:   String(row.EJERCICIO || '').trim().replace(/_/g,' '),
-        sr:  parseFloat(row.SERIES) || 0,
-        r:   parseFloat(row.REPS)   || 0,
-        c:   parseFloat(row.CARGA)  || 0,
-        tt:  String(row['TIEMPO TRABAJO']  || '').trim(),
-        td:  String(row['TIEMPO DESCANSO'] || '').trim(),
+        s:   parseInt(sesion.semana) || 0,
+        d:   parseInt(sesion.dia)   || 0,
+        mes: parseInt(sesion.mes)   || 1,
+        m:   String(row.grupo_muscular || '').trim().toUpperCase(),
+        e:   String(row.ejercicio || '').trim().replace(/_/g,' '),
+        sr:  parseFloat(row.series) || 0,
+        r:   parseFloat(row.reps)   || 0,
+        c:   parseFloat(row.carga)  || 0,
+        tt:  String(row.tiempo_trabajo  || '').trim(),
+        td:  String(row.tiempo_descanso || '').trim(),
       });
     });
 
