@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Cards — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:100vh;padding:32px 20px}
+.container{max-width:680px;margin:0 auto}
+
+/* Header */
+.page-header{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.brand-dot{width:28px;height:28px;background:#c8a45a;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-dot svg{width:15px;height:15px}
+.page-title{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.page-sub{font-size:13px;color:#8a8278;margin-top:2px}
+.back-link{margin-left:auto;font-size:12px;color:#c8a45a;font-weight:600;text-decoration:none}
+
+/* Steps */
+.steps{display:flex;gap:0;margin-bottom:28px}
+.step{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;color:#c4bdb5;cursor:default;transition:all .2s}
+.step.active{background:#fff;color:#1a1714;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.step.done{color:#c8a45a}
+.step-num{width:22px;height:22px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step.active .step-num{background:#c8a45a;color:#fff}
+.step.done .step-num{background:#22c55e;color:#fff}
+
+/* Cards */
+.card{background:#fff;border:1px solid #e8e4de;border-radius:14px;padding:24px;margin-bottom:20px}
+.card-title{font-size:15px;font-weight:700;color:#1a1714;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.card-title-icon{font-size:18px}
+
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
+.field input, .field select{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s}
+.field input:focus, .field select:focus{border-color:#c8a45a}
+.field input::placeholder{color:#c4bdb5}
+
+/* Days selector */
+.days-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.day-btn{padding:7px 12px;border:1.5px solid #e8e4de;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#8a8278;transition:all .15s;font-family:inherit}
+.day-btn.selected{background:#c8a45a;border-color:#c8a45a;color:#fff}
+
+/* Buttons */
+.btn-primary{width:100%;padding:13px;background:#1a1714;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:8px}
+.btn-primary:hover{background:#333}
+.btn-primary:disabled{opacity:.4;cursor:default}
+.btn-secondary{padding:10px 18px;background:#f0ede8;color:#1a1714;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* Exercise form */
+.ex-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;align-items:end;padding:12px;background:#faf8f5;border-radius:8px;margin-bottom:8px;border:1px solid #f0ede8}
+.ex-row .field label{font-size:10px}
+.ex-list{margin-top:12px}
+.ex-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e8e4de;border-radius:8px;margin-bottom:6px}
+.ex-item-name{flex:1;font-size:13px;font-weight:600;color:#1a1714}
+.ex-item-meta{font-size:11px;color:#8a8278}
+.ex-item-grupo{font-size:10px;color:#c8a45a;font-weight:600;text-transform:uppercase}
+.ex-delete{background:none;border:none;color:#c4bdb5;cursor:pointer;font-size:16px;padding:2px 6px}
+.ex-delete:hover{color:#e05555}
+
+/* Session selector */
+.session-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:16px}
+.session-chip{padding:8px;border:1.5px solid #e8e4de;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;background:#fff;color:#8a8278;transition:all .15s}
+.session-chip:hover{border-color:#c8a45a;color:#c8a45a}
+.session-chip.active{background:#c8a45a;border-color:#c8a45a;color:#fff}
+.session-chip.has-exercises{background:#f0ede8;border-color:#c8a45a;color:#8a6020}
+
+/* Status */
+.status-msg{padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-top:12px;display:none}
+.status-msg.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;display:block}
+.status-msg.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;display:block}
+.status-msg.loading{background:#fefce8;color:#92400e;border:1px solid #fde68a;display:block}
+
+/* Summary */
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0ede8;font-size:13px}
+.summary-row:last-child{border-bottom:none}
+.summary-label{color:#8a8278}
+.summary-value{font-weight:600;color:#1a1714}
+
+/* Progress */
+.progress-bar{height:4px;background:#f0ede8;border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:#c8a45a;border-radius:2px;transition:width .3s}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="brand-dot">
+      <svg viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="4.5" height="12" rx="1.2" fill="#111"/>
+        <rect x="8" y="1" width="4.5" height="7" rx="1.2" fill="#111"/>
+      </svg>
+    </div>
+    <div>
+      <div class="page-title">Nuevo Alumno</div>
+      <div class="page-sub">Training Cards Admin</div>
+    </div>
+    <a href="training-cards.html" class="back-link">← Volver a Cards</a>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:33%"></div></div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step-tab-1">
+      <div class="step-num">1</div> Datos del alumno
+    </div>
+    <div class="step" id="step-tab-2">
+      <div class="step-num">2</div> Sesiones
+    </div>
+    <div class="step" id="step-tab-3">
+      <div class="step-num">3</div> Ejercicios
+    </div>
+  </div>
+
+  <!-- STEP 1: ALUMNO -->
+  <div id="step-1">
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">👤</span> Datos del alumno</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="nombre" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label>Objetivo</label>
+          <select id="objetivo">
+            <option value="">Seleccionar...</option>
+            <option value="Musculacion general">Musculación general</option>
+            <option value="Fuerza">Fuerza</option>
+            <option value="Circuitos">Circuitos</option>
+            <option value="Acondicionamiento">Acondicionamiento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha de inicio</label>
+          <input type="date" id="fecha_inicio">
+        </div>
+        <div class="field">
+          <label>Semanas de planificación</label>
+          <select id="semanas">
+            <option value="4">4 semanas (1 mes)</option>
+            <option value="8">8 semanas (2 meses)</option>
+            <option value="12" selected>12 semanas (3 meses)</option>
+            <option value="16">16 semanas (4 meses)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Días de entrenamiento</label>
+        <div class="days-grid" id="days-grid">
+          <button class="day-btn" onclick="toggleDay(this,'Lunes')">Lunes</button>
+          <button class="day-btn" onclick="toggleDay(this,'Martes')">Martes</button>
+          <button class="day-btn" onclick="toggleDay(this,'Miércoles')">Miércoles</button>
+          <button class="day-btn" onclick="toggleDay(this,'Jueves')">Jueves</button>
+          <button class="day-btn" onclick="toggleDay(this,'Viernes')">Viernes</button>
+          <button class="day-btn" onclick="toggleDay(this,'Sábado')">Sábado</button>
+          <button class="day-btn" onclick="toggleDay(this,'Domingo')">Domingo</button>
+        </div>
+      </div>
+      <div id="status-1" class="status-msg"></div>
+      <button class="btn-primary" onclick="crearAlumno()">Crear alumno y generar sesiones →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: SESIONES -->
+  <div id="step-2" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">📅</span> Sesiones generadas</div>
+      <div id="summary-alumno"></div>
+      <div id="status-2" class="status-msg"></div>
+      <button class="btn-primary" onclick="goToStep3()">Cargar ejercicios →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: EJERCICIOS -->
+  <div id="step-3" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🏋️</span> Cargar ejercicios</div>
+
+      <!-- Session selector -->
+      <div class="field" style="margin-bottom:14px">
+        <label>Seleccioná semana y día</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <select id="sel-semana-ej" style="flex:1;padding:9px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none" onchange="updateDaySelector()">
+          </select>
+          <select id="sel-dia-ej" style="flex:1;padding:9px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none" onchange="loadExistingExercises()">
+          </select>
+        </div>
+      </div>
+
+      <!-- Ejercicio form -->
+      <div class="ex-row">
+        <div class="field">
+          <label>Grupo muscular</label>
+          <input type="text" id="ej-grupo" placeholder="Ej: Pecho" list="grupos-list">
+          <datalist id="grupos-list">
+            <option value="Pecho"><option value="Espalda"><option value="Hombros">
+            <option value="Bíceps"><option value="Tríceps"><option value="Piernas">
+            <option value="Glúteos"><option value="Abs"><option value="Core">
+            <option value="Torso Tracción"><option value="Torso Empuje">
+            <option value="Piernas Tracción"><option value="Piernas Empuje">
+          </datalist>
+        </div>
+        <div class="field">
+          <label>Ejercicio</label>
+          <input type="text" id="ej-nombre" placeholder="Nombre">
+        </div>
+        <div class="field">
+          <label>S / R / Kg</label>
+          <div style="display:flex;gap:5px">
+            <input type="number" id="ej-series" placeholder="Ser" min="1" max="10" style="width:50px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center">
+            <input type="number" id="ej-reps" placeholder="Rep" min="1" max="50" style="width:50px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center">
+            <input type="number" id="ej-carga" placeholder="Kg" min="0" step="0.5" style="width:55px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center">
+          </div>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button onclick="agregarEjercicio()" style="padding:10px 14px;background:#c8a45a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Agregar</button>
+        </div>
+      </div>
+
+      <!-- Lista ejercicios del día -->
+      <div id="ex-list-display" class="ex-list"></div>
+      <div id="status-3" class="status-msg"></div>
+
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-secondary" onclick="window.location.href='training-cards.html'">✓ Terminar</button>
+        <button class="btn-primary" style="margin-top:0" onclick="window.location.href='admin.html'">+ Nuevo alumno</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
+
+const headers = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation'
+};
+
+let selectedDays = [];
+let currentAlumnoId = null;
+let currentSesiones = [];
+let currentExercicios = {};  // {sesion_id: [{grupo, ejercicio, series, reps, carga}]}
+
+// ── DÍAS ──────────────────────────────────────────────────────────────
+function toggleDay(btn, day) {
+  btn.classList.toggle('selected');
+  if (selectedDays.includes(day)) {
+    selectedDays = selectedDays.filter(d => d !== day);
+  } else {
+    selectedDays.push(day);
+  }
+}
+
+// ── STEP 1: CREAR ALUMNO + SESIONES ──────────────────────────────────
+async function crearAlumno() {
+  const nombre      = document.getElementById('nombre').value.trim();
+  const objetivo    = document.getElementById('objetivo').value;
+  const fecha       = document.getElementById('fecha_inicio').value;
+  const semanas     = parseInt(document.getElementById('semanas').value);
+  const status      = document.getElementById('status-1');
+
+  if (!nombre || !objetivo || !fecha || selectedDays.length === 0) {
+    showStatus(status, 'error', 'Completá todos los campos y elegí al menos un día.');
+    return;
+  }
+
+  showStatus(status, 'loading', 'Creando alumno...');
+
+  try {
+    // 1. Insertar alumno
+    const resA = await fetch(`${SUPABASE_URL}/rest/v1/alumnos`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        nombre, objetivo,
+        fecha_inicio: fecha,
+        dias_entrenamiento: selectedDays.join(', ')
+      })
+    });
+    if (!resA.ok) throw new Error(await resA.text());
+    const alumno = (await resA.json())[0];
+    currentAlumnoId = alumno.id;
+
+    showStatus(status, 'loading', `Alumno creado (ID: ${alumno.id}). Generando sesiones...`);
+
+    // 2. Generar sesiones
+    const startDate = new Date(fecha + 'T00:00:00');
+    const sesiones  = [];
+    const numDias   = selectedDays.length;
+
+    for (let week = 1; week <= semanas; week++) {
+      const mes = Math.ceil(week / 4);
+      for (let dia = 1; dia <= numDias; dia++) {
+        const offset  = (week - 1) * 7 + (dia - 1);
+        const fecha_s = new Date(startDate);
+        fecha_s.setDate(startDate.getDate() + offset);
+        sesiones.push({
+          alumno_id: currentAlumnoId,
+          fecha: fecha_s.toISOString().split('T')[0],
+          mes, semana: week, dia
+        });
+      }
+    }
+
+    const resS = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(sesiones)
+    });
+    if (!resS.ok) throw new Error(await resS.text());
+    currentSesiones = await resS.json();
+
+    showStatus(status, 'success', `✓ ${currentSesiones.length} sesiones generadas correctamente.`);
+
+    // Mostrar resumen
+    goToStep2(nombre, objetivo, semanas, numDias);
+
+  } catch(e) {
+    showStatus(status, 'error', 'Error: ' + e.message);
+  }
+}
+
+function goToStep2(nombre, objetivo, semanas, dias) {
+  document.getElementById('step-1').style.display = 'none';
+  document.getElementById('step-2').style.display = 'block';
+  document.getElementById('progress').style.width = '66%';
+  setStepDone(1); setStepActive(2);
+
+  document.getElementById('summary-alumno').innerHTML = `
+    <div class="summary-row"><span class="summary-label">Alumno</span><span class="summary-value">${nombre}</span></div>
+    <div class="summary-row"><span class="summary-label">Objetivo</span><span class="summary-value">${objetivo}</span></div>
+    <div class="summary-row"><span class="summary-label">Planificación</span><span class="summary-value">${semanas} semanas · ${dias} días/semana</span></div>
+    <div class="summary-row"><span class="summary-label">Días</span><span class="summary-value">${selectedDays.join(', ')}</span></div>
+    <div class="summary-row"><span class="summary-label">Total sesiones</span><span class="summary-value">${currentSesiones.length} sesiones generadas ✓</span></div>
+  `;
+}
+
+function goToStep3() {
+  document.getElementById('step-2').style.display = 'none';
+  document.getElementById('step-3').style.display = 'block';
+  document.getElementById('progress').style.width = '100%';
+  setStepDone(2); setStepActive(3);
+
+  // Poblar selector de semanas
+  const semanas = [...new Set(currentSesiones.map(s => s.semana))].sort((a,b)=>a-b);
+  const selSem = document.getElementById('sel-semana-ej');
+  selSem.innerHTML = semanas.map(s => `<option value="${s}">Semana ${s}</option>`).join('');
+  updateDaySelector();
+}
+
+function updateDaySelector() {
+  const semana  = parseInt(document.getElementById('sel-semana-ej').value);
+  const dias    = currentSesiones.filter(s => s.semana === semana).sort((a,b)=>a.dia-b.dia);
+  const selDia  = document.getElementById('sel-dia-ej');
+  selDia.innerHTML = dias.map(s => `<option value="${s.id}">Día ${s.dia} — ${s.fecha}</option>`).join('');
+  loadExistingExercises();
+}
+
+function loadExistingExercises() {
+  const sesionId = parseInt(document.getElementById('sel-dia-ej').value);
+  const list = currentExercicios[sesionId] || [];
+  renderExList(sesionId, list);
+}
+
+function renderExList(sesionId, list) {
+  const el = document.getElementById('ex-list-display');
+  if (!list.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#c4bdb5;padding:8px 0">Sin ejercicios cargados en este día</div>';
+    return;
+  }
+  el.innerHTML = list.map((ex, i) => `
+    <div class="ex-item">
+      <div style="flex:1">
+        <div class="ex-item-grupo">${ex.grupo_muscular}</div>
+        <div class="ex-item-name">${ex.ejercicio}</div>
+        <div class="ex-item-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga}kg</div>
+      </div>
+      <button class="ex-delete" onclick="eliminarEjercicio(${sesionId},${i})">✕</button>
+    </div>`).join('');
+}
+
+async function agregarEjercicio() {
+  const sesionId = parseInt(document.getElementById('sel-dia-ej').value);
+  const grupo    = document.getElementById('ej-grupo').value.trim();
+  const nombre   = document.getElementById('ej-nombre').value.trim();
+  const series   = parseInt(document.getElementById('ej-series').value) || 0;
+  const reps     = parseInt(document.getElementById('ej-reps').value) || 0;
+  const carga    = parseFloat(document.getElementById('ej-carga').value) || 0;
+  const status   = document.getElementById('status-3');
+
+  if (!grupo || !nombre || !series) {
+    showStatus(status, 'error', 'Completá grupo, ejercicio y series.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        sesion_id: sesionId,
+        alumno_id: currentAlumnoId,
+        grupo_muscular: grupo,
+        ejercicio: nombre,
+        series, reps, carga
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Agregar a lista local
+    if (!currentExercicios[sesionId]) currentExercicios[sesionId] = [];
+    currentExercicios[sesionId].push({grupo_muscular: grupo, ejercicio: nombre, series, reps, carga});
+    renderExList(sesionId, currentExercicios[sesionId]);
+
+    // Limpiar campos
+    document.getElementById('ej-nombre').value = '';
+    document.getElementById('ej-series').value = '';
+    document.getElementById('ej-reps').value   = '';
+    document.getElementById('ej-carga').value  = '';
+    document.getElementById('ej-grupo').focus();
+
+    showStatus(status, 'success', `✓ ${nombre} agregado.`);
+    setTimeout(() => status.style.display = 'none', 2000);
+
+  } catch(e) {
+    showStatus(status, 'error', 'Error: ' + e.message);
+  }
+}
+
+async function eliminarEjercicio(sesionId, idx) {
+  currentExercicios[sesionId].splice(idx, 1);
+  renderExList(sesionId, currentExercicios[sesionId] || []);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function showStatus(el, type, msg) {
+  el.className = `status-msg ${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function setStepDone(n) {
+  const tab = document.getElementById(`step-tab-${n}`);
+  tab.classList.remove('active');
+  tab.classList.add('done');
+  tab.querySelector('.step-num').textContent = '✓';
+}
+
+function setStepActive(n) {
+  document.getElementById(`step-tab-${n}`).classList.add('active');
+}
+</script>
+</body>
+</html>
