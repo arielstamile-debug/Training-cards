@@ -1431,15 +1431,17 @@ function abrirExtenderModal() {
   if (!selAlumno || !DB[selAlumno]) return;
   extendSemanasCount = 4;
   
-  // Default: same days as current semana
-  const diasActuales = getDias(selAlumno, selSemana);
-  extendDiasSelected = new Set(diasActuales);
+  // Default: all days the alumno currently trains (across all semanas)
+  const todasLasSems = getSemanas(selAlumno);
+  const todosLosDias = new Set();
+  todasLasSems.forEach(s => getDias(selAlumno, s).forEach(d => todosLosDias.add(d)));
+  extendDiasSelected = todosLosDias;
 
-  const sems = getSemanas(selAlumno);
+  const sems = todasLasSems;
   const maxSem = Math.max(...sems);
   
   document.getElementById('extend-modal-sub').textContent = 
-    `${selAlumno} · actualmente tiene ${sems.length} semanas (hasta S${maxSem})`;
+    `${selAlumno} · ${sems.length} semanas hasta S${maxSem}`;
   
   renderExtendDias();
   updateExtendPreview();
@@ -1516,7 +1518,7 @@ async function confirmarExtender() {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
+        'Prefer': 'return=minimal,resolution=ignore-duplicates'
       },
       body: JSON.stringify(sesionesToCreate)
     });
