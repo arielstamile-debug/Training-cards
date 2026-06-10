@@ -695,7 +695,9 @@ function selectAlumno(name) {
   renderSidebar(); renderCard();
 }
 function selectSemana(s) {
-  selSemana=s; selDia=getDias(selAlumno,s)[0];
+  selSemana=s;
+  const diasDisponibles = getDias(selAlumno, s);
+  selDia = diasDisponibles.includes(selDia) ? selDia : diasDisponibles[0];
   renderSidebar(); renderCard();
 }
 function selectDia(d) {
