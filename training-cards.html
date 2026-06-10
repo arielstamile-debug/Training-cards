@@ -340,7 +340,7 @@ async function loadFromSupabase() {
     document.getElementById('db-status').textContent = 'Cargando...';
 
     // Query con JOIN de las 3 tablas via PostgREST
-    const query = `${SUPABASE_URL}/rest/v1/ejercicios?select=*,sesiones(semana,dia,mes,fecha),alumnos(nombre,objetivo)&order=sesiones(semana),sesiones(dia)`;
+    const query = `${SUPABASE_URL}/rest/v1/ejercicios?select=id,alumno_id,sesion_id,grupo_muscular,ejercicio,series,reps,carga,tiempo_trabajo,tiempo_descanso,sesiones(id,semana,dia,mes,fecha),alumnos(id,nombre,objetivo)&order=sesiones(semana),sesiones(dia)`;
 
     const res = await fetch(query, {
       headers: {
@@ -366,7 +366,7 @@ async function loadFromSupabase() {
         s:         parseInt(sesion.semana) || 0,
         d:         parseInt(sesion.dia)   || 0,
         mes:       parseInt(sesion.mes)   || 1,
-        sesion_id: row.sesion_id,
+        sesion_id: row.sesion_id || sesion.id,
         m:   String(row.grupo_muscular || '').trim().toUpperCase(),
         e:   String(row.ejercicio || '').trim().replace(/_/g,' '),
         sr:  parseFloat(row.series) || 0,
