@@ -404,10 +404,20 @@ async function loadFromSupabase() {
     document.getElementById('db-status').textContent = `${count} alumno${count!==1?'s':''} cargado${count!==1?'s':''}`;
 
     if (count > 0) {
-      const first = Object.keys(DB)[0];
+      const saved = sessionStorage.getItem('tc_alumno');
+      const savedSem = parseInt(sessionStorage.getItem('tc_semana'));
+      const savedDia = parseInt(sessionStorage.getItem('tc_dia'));
+      sessionStorage.removeItem('tc_alumno');
+      sessionStorage.removeItem('tc_semana');
+      sessionStorage.removeItem('tc_dia');
+
+      const first = (saved && DB[saved]) ? saved : Object.keys(DB)[0];
       selAlumno = first;
-      selSemana = getSemanas(first)[0];
-      selDia    = getDias(first, selSemana)[0];
+      const sems = getSemanas(first);
+      selSemana = (savedSem && sems.includes(savedSem)) ? savedSem : sems[0];
+      const dias = getDias(first, selSemana);
+      selDia = (savedDia && dias.includes(savedDia)) ? savedDia : dias[0];
+
       renderSidebar(); renderCard();
       document.getElementById('export-btn').disabled = false;
       document.getElementById('url-btn').disabled = false;
@@ -1067,6 +1077,9 @@ function editarDia(sem, dia) {
     alert('No se encontró la sesión. Intentá recargar la página.');
     return;
   }
+  sessionStorage.setItem('tc_alumno', selAlumno);
+  sessionStorage.setItem('tc_semana', selSemana);
+  sessionStorage.setItem('tc_dia',    selDia);
   window.location.href = `editar-alumno.html?alumno_id=${alumnoId}&sesion_id=${row.sesion_id}`;
 }
 
