@@ -342,11 +342,12 @@ async function loadFromSupabase() {
       const objetivo = String(alumno.objetivo || '').trim();
       if (!nombre) return;
 
-      if (!DB[nombre]) DB[nombre] = { objetivo, rows: [] };
+      if (!DB[nombre]) DB[nombre] = { objetivo, alumno_id: row.alumno_id, rows: [] };
       DB[nombre].rows.push({
-        s:   parseInt(sesion.semana) || 0,
-        d:   parseInt(sesion.dia)   || 0,
-        mes: parseInt(sesion.mes)   || 1,
+        s:         parseInt(sesion.semana) || 0,
+        d:         parseInt(sesion.dia)   || 0,
+        mes:       parseInt(sesion.mes)   || 1,
+        sesion_id: row.sesion_id,
         m:   String(row.grupo_muscular || '').trim().toUpperCase(),
         e:   String(row.ejercicio || '').trim().replace(/_/g,' '),
         sr:  parseFloat(row.series) || 0,
@@ -973,7 +974,18 @@ function renderPlanner() {
             const diasHtml = Array.from({length: maxDias}, (_,i) => i+1).map(d => {
               const hasData = diasConData.has(d);
               const isSelected = selSemana === parseInt(sem) && selDia === d;
-              return `<div class="day-chip ${hasData?'has-data':'no-data'}${isSelected?' selected':''}"
+              if (hasData) {
+                return `<div style="display:flex;align-items:center;gap:3px">
+                  <div class="day-chip has-data${isSelected?' selected':''}"
+                    onclick="selectFromPlanner(${sem},${d})"
+                    >D${d}</div>
+                  <div title="Editar día" onclick="editarDia(${sem},${d})"
+                    style="width:22px;height:22px;border-radius:5px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s;flex-shrink:0"
+                    onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
+                    onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
+                </div>`;
+              }
+              return `<div class="day-chip no-data${isSelected?' selected':''}"
                 onclick="selectFromPlanner(${sem},${d})"
                 >D${d}</div>`;
             }).join('');
@@ -996,6 +1008,18 @@ function selectFromPlanner(sem, dia) {
   switchView('cards');
   renderSidebar();
   renderCard();
+}
+
+function editarDia(sem, dia) {
+  if (!selAlumno || !DB[selAlumno]) return;
+  const alumnoId = DB[selAlumno].alumno_id;
+  // Find sesion_id from the rows for this semana+dia
+  const row = DB[selAlumno].rows.find(r => r.s === parseInt(sem) && r.d === dia);
+  if (!row || !row.sesion_id) {
+    alert('No se encontró la sesión. Intentá recargar la página.');
+    return;
+  }
+  window.location.href = `editar-alumno.html?alumno_id=${alumnoId}&sesion_id=${row.sesion_id}`;
 }
 
 // INIT
