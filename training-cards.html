@@ -132,6 +132,28 @@ body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:
 .modal-btn-confirm:disabled{opacity:.4;cursor:default}
 .modal-btn-cancel{padding:12px 18px;background:#f0ede8;color:#8a8278;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .modal-warn{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:16px;display:none}
+
+/* ── EDIT EXERCISE MODAL ── */
+.edit-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+.edit-modal-box{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.edit-modal-title{font-size:16px;font-weight:800;color:#1a1714;margin-bottom:2px}
+.edit-modal-sub{font-size:12px;color:#8a8278;margin-bottom:20px}
+.edit-modal-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.edit-modal-field{display:flex;flex-direction:column;gap:5px}
+.edit-modal-field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
+.edit-modal-field input{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:15px;font-family:inherit;color:#1a1714;outline:none;text-align:center;transition:border .15s;width:100%}
+.edit-modal-field input:focus{border-color:#c8a45a}
+.edit-modal-actions{display:flex;gap:10px;margin-top:4px}
+.edit-modal-save{flex:1;padding:12px;background:#1a1714;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.edit-modal-save:hover{background:#333}
+.edit-modal-cancel{padding:12px 18px;background:#f0ede8;color:#8a8278;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.edit-modal-delete{padding:12px 14px;background:#fff0f0;color:#e05555;border:1px solid #fecaca;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.edit-modal-delete:hover{background:#fecaca}
+.edit-modal-status{font-size:12px;font-weight:500;margin-top:10px;display:none;padding:8px 12px;border-radius:7px}
+.edit-modal-status.success{display:block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.edit-modal-status.error{display:block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+tr.ex-row-clickable{cursor:pointer;transition:background .12s}
+tr.ex-row-clickable:hover td{background:rgba(200,164,90,.08) !important}
 </style>
 </head>
 <body>
@@ -363,6 +385,7 @@ async function loadFromSupabase() {
 
       if (!DB[nombre]) DB[nombre] = { objetivo, alumno_id: row.alumno_id, rows: [] };
       DB[nombre].rows.push({
+        id:        row.id,
         s:         parseInt(sesion.semana) || 0,
         d:         parseInt(sesion.dia)   || 0,
         mes:       parseInt(sesion.mes)   || 1,
@@ -665,7 +688,7 @@ function renderCard() {
         </thead>
         <tbody>
           ${ejercicios.map((ex,i)=>`
-            <tr style="background:${i%2===0?t.tableRow1:t.tableRow2}" onmouseover="this.style.background='${t.surface2}'" onmouseout="this.style.background='${i%2===0?t.tableRow1:t.tableRow2}'">
+            <tr class="ex-row-clickable" style="background:${i%2===0?t.tableRow1:t.tableRow2}" onclick="openEditModalByIndex(${i})">
               <td style="border-bottom-color:${t.tableBorder}">
                 <div class="ex-name-cell">
                   <span class="ex-num" style="background:${t.numBg};color:${t.numText}">${i+1}</span>
@@ -1191,6 +1214,105 @@ async function confirmarCopia() {
   }
 }
 
+
+// ── EDIT EXERCISE MODAL ──────────────────────────────────────────────────
+let editingEx = null;
+
+function openEditModalByIndex(idx) {
+  const ex = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia)[idx];
+  openEditModal(ex);
+}
+
+function openEditModal(ex) {
+  editingEx = ex;
+  document.getElementById('edit-modal-title').textContent = ex.e;
+  document.getElementById('edit-modal-sub').textContent   = ex.m ? ex.m.toLowerCase() : '';
+  document.getElementById('edit-series').value = ex.sr || '';
+  document.getElementById('edit-reps').value   = ex.r  || '';
+  document.getElementById('edit-carga').value  = ex.c  || '';
+  document.getElementById('edit-modal-status').className = 'edit-modal-status';
+  document.getElementById('edit-modal-status').textContent = '';
+  document.getElementById('edit-ex-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('edit-series').focus(), 100);
+}
+
+function closeEditModal() {
+  document.getElementById('edit-ex-modal').style.display = 'none';
+  editingEx = null;
+}
+
+async function saveEditModal() {
+  if (!editingEx) return;
+  const series = parseFloat(document.getElementById('edit-series').value) || 0;
+  const reps   = parseFloat(document.getElementById('edit-reps').value)   || 0;
+  const carga  = parseFloat(document.getElementById('edit-carga').value)  || 0;
+  const status = document.getElementById('edit-modal-status');
+  const btn    = document.querySelector('.edit-modal-save');
+
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${editingEx.id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ series, reps, carga })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Update local DB
+    const row = DB[selAlumno].rows.find(r => r.id === editingEx.id);
+    if (row) { row.sr = series; row.r = reps; row.c = carga; }
+
+    status.className = 'edit-modal-status success';
+    status.textContent = '✓ Guardado';
+    renderCard();
+    setTimeout(() => closeEditModal(), 800);
+
+  } catch(e) {
+    status.className = 'edit-modal-status error';
+    status.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.textContent = 'Guardar';
+    btn.disabled = false;
+  }
+}
+
+async function deleteExFromModal() {
+  if (!editingEx) return;
+  const status = document.getElementById('edit-modal-status');
+  const btn = document.querySelector('.edit-modal-delete');
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${editingEx.id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Remove from local DB
+    DB[selAlumno].rows = DB[selAlumno].rows.filter(r => r.id !== editingEx.id);
+    closeEditModal();
+    renderCard();
+
+  } catch(e) {
+    status.className = 'edit-modal-status error';
+    status.textContent = 'Error: ' + e.message;
+    btn.textContent = '🗑';
+    btn.disabled = false;
+  }
+}
+
 // INIT
 loadFromSupabase();
 </script>
@@ -1208,5 +1330,34 @@ loadFromSupabase();
     </div>
   </div>
 </div>
+
+<!-- EDIT EXERCISE MODAL -->
+<div id="edit-ex-modal" class="edit-modal-overlay" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal-box">
+    <div class="edit-modal-title" id="edit-modal-title">Editar ejercicio</div>
+    <div class="edit-modal-sub" id="edit-modal-sub"></div>
+    <div class="edit-modal-grid">
+      <div class="edit-modal-field">
+        <label>Series</label>
+        <input type="number" id="edit-series" min="1" max="20">
+      </div>
+      <div class="edit-modal-field">
+        <label>Reps</label>
+        <input type="number" id="edit-reps" min="1" max="100">
+      </div>
+      <div class="edit-modal-field">
+        <label>Carga (kg)</label>
+        <input type="number" id="edit-carga" min="0" step="0.5">
+      </div>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="edit-modal-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="edit-modal-delete" onclick="deleteExFromModal()" title="Eliminar ejercicio">🗑</button>
+      <button class="edit-modal-save" onclick="saveEditModal()">Guardar</button>
+    </div>
+    <div id="edit-modal-status" class="edit-modal-status"></div>
+  </div>
+</div>
+
 </body>
 </html>
