@@ -803,10 +803,10 @@ function selectSemana(s) {
   selSemana=s;
   const diasDisponibles = getDias(selAlumno, s);
   selDia = diasDisponibles.includes(selDia) ? selDia : diasDisponibles[0];
-  renderSidebar(); renderCard();
+  renderSidebar(); renderCard(); renderPlanner();
 }
 function selectDia(d) {
-  selDia=d; renderSidebar(); renderCard();
+  selDia=d; renderSidebar(); renderCard(); renderPlanner();
 }
 
 // ── GENERATE STUDENT URL ──────────────────────────────────────────────────
@@ -1155,9 +1155,10 @@ function renderPlanner() {
 function selectFromPlanner(sem, dia) {
   selSemana = parseInt(sem);
   selDia    = dia;
-  switchView('cards');
+  // Sync both views without forcing navigation
   renderSidebar();
   renderCard();
+  renderPlanner();
 }
 
 function editarDia(sem, dia) {
