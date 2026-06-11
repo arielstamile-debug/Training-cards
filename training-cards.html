@@ -1152,6 +1152,14 @@ function renderPlanner() {
     </div>`;
 }
 
+function scrollSidebarToActive() {
+  // Scroll active week button into view in sidebar
+  const activeWeek = document.querySelector('#week-filters .filter-btn.active');
+  if (activeWeek) activeWeek.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  const activeDay = document.querySelector('#day-filters .filter-btn.active');
+  if (activeDay) activeDay.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+}
+
 function selectSemanaFromPlanner(sem) {
   selSemana = parseInt(sem);
   const dias = getDias(selAlumno, selSemana);
@@ -1159,15 +1167,16 @@ function selectSemanaFromPlanner(sem) {
   renderSidebar();
   renderCard();
   renderPlanner();
+  setTimeout(scrollSidebarToActive, 50);
 }
 
 function selectFromPlanner(sem, dia) {
   selSemana = parseInt(sem);
   selDia    = dia;
-  // Sync both views without forcing navigation
   renderSidebar();
   renderCard();
   renderPlanner();
+  setTimeout(scrollSidebarToActive, 50);
 }
 
 function editarDia(sem, dia) {
@@ -1602,27 +1611,29 @@ async function borrarDia(sem, dia) {
   const alumnoId = DB[selAlumno].alumno_id;
   const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
+  // Calculate destination BEFORE deleting (while DB still has all data)
+  const diasEnSem = getDias(selAlumno, parseInt(sem)).filter(d => d !== parseInt(dia));
+  let targetSem = parseInt(sem);
+  let targetDia;
+  if (diasEnSem.length > 0) {
+    // Closest previous day, or first available
+    const prevDias = diasEnSem.filter(d => d < parseInt(dia));
+    targetDia = prevDias.length > 0 ? prevDias[prevDias.length - 1] : diasEnSem[0];
+  } else {
+    // No more days — go to previous semana
+    const allSems = getSemanas(selAlumno);
+    const prevSems = allSems.filter(s => s < parseInt(sem));
+    targetSem = prevSems.length > 0 ? prevSems[prevSems.length - 1] : allSems.find(s => s !== parseInt(sem)) || parseInt(sem);
+    const prevDias = getDias(selAlumno, targetSem);
+    targetDia = prevDias[prevDias.length - 1] || prevDias[0] || 1;
+  }
+
   try {
     const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${sem}&dia=eq.${dia}&select=id`, { headers: hdrs });
     const sesiones = await resSes.json();
     for (const ses of sesiones) {
       await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
       await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
-    }
-
-    // Find where to land: prev day in same semana, or last day of prev semana
-    const diasEnSem = getDias(selAlumno, parseInt(sem)).filter(d => d !== dia);
-    let targetSem = parseInt(sem);
-    let targetDia;
-    if (diasEnSem.length > 0) {
-      // Stay in same semana, go to closest previous day
-      targetDia = [...diasEnSem].filter(d => d < dia).pop() || diasEnSem[0];
-    } else {
-      // No more days in this semana — go to prev semana
-      const sems = getSemanas(selAlumno).filter(s => s < parseInt(sem));
-      targetSem = sems.length > 0 ? sems[sems.length - 1] : getSemanas(selAlumno)[0];
-      const prevDias = getDias(selAlumno, targetSem);
-      targetDia = prevDias[prevDias.length - 1] || prevDias[0];
     }
 
     sessionStorage.setItem('tc_alumno', selAlumno);
