@@ -400,6 +400,8 @@ async function loadFromSupabase() {
     const rows    = await resEj.json();
     const sesRows = await resSes.json();
 
+    // Preserve existing order if reloading
+    const existingOrder = Object.keys(DB);
     DB = {};
 
     // 1. Registrar todas las sesiones (incluso vacías) para que aparezcan en el sidebar
@@ -440,6 +442,21 @@ async function loadFromSupabase() {
       });
     });
 
+    // Restore original alumno order if reloading
+    if (existingOrder.length > 0) {
+      const newDB = {};
+      // First add alumnos in original order
+      existingOrder.forEach(name => { if (DB[name]) newDB[name] = DB[name]; });
+      // Then add any new alumnos
+      Object.keys(DB).forEach(name => { if (!newDB[name]) newDB[name] = DB[name]; });
+      Object.assign(DB, newDB);
+      // Replace DB keys in order
+      const ordered = {};
+      Object.keys(newDB).forEach(k => ordered[k] = DB[k]);
+      for (const k of Object.keys(DB)) delete DB[k];
+      Object.assign(DB, ordered);
+    }
+
     const count = Object.keys(DB).length;
     document.getElementById('db-status').textContent = `${count} alumno${count!==1?'s':''} cargado${count!==1?'s':''}`;
 
@@ -451,6 +468,9 @@ async function loadFromSupabase() {
       sessionStorage.removeItem('tc_semana');
       sessionStorage.removeItem('tc_dia');
 
+      const savedView = sessionStorage.getItem('tc_view');
+      sessionStorage.removeItem('tc_view');
+
       const first = (saved && DB[saved]) ? saved : Object.keys(DB)[0];
       selAlumno = first;
       const sems = getSemanas(first);
@@ -458,7 +478,8 @@ async function loadFromSupabase() {
       const dias = getDias(first, selSemana);
       selDia = (savedDia && dias.includes(savedDia)) ? savedDia : dias[0];
 
-      renderSidebar(); renderCard();
+      renderSidebar(); renderCard(); renderPlanner();
+      if (savedView === 'planner') switchView('planner');
       document.getElementById('export-btn').disabled = false;
       document.getElementById('url-btn').disabled = false;
       document.getElementById('extend-btn').disabled = false;
@@ -595,7 +616,7 @@ function handleFile(file) {
       selAlumno = first;
       selSemana = getSemanas(first)[0];
       selDia    = getDias(first, selSemana)[0];
-      renderSidebar(); renderCard();
+      renderSidebar(); renderCard(); renderPlanner();
       document.getElementById('export-btn').disabled = false;
       document.getElementById('url-btn').disabled = false;
       document.getElementById('extend-btn').disabled = false;
@@ -1567,7 +1588,7 @@ async function confirmarExtender() {
 
 // ── BORRAR DÍA / SEMANA ──────────────────────────────────────────────────
 async function borrarDia(sem, dia) {
-  if (!confirm(`¿Borrar S${sem} D${dia} y todos sus ejercicios?`)) return;
+  if (!confirm(`¿Borrar D${dia} de S${sem} y todos sus ejercicios?`)) return;
   const alumnoId = DB[selAlumno].alumno_id;
   const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
@@ -1582,6 +1603,7 @@ async function borrarDia(sem, dia) {
     sessionStorage.setItem('tc_alumno', selAlumno);
     sessionStorage.setItem('tc_semana', selSemana);
     sessionStorage.setItem('tc_dia', selDia);
+    sessionStorage.setItem('tc_view', 'planner');
     await loadFromSupabase();
   } catch(e) {
     alert('Error al borrar: ' + e.message);
@@ -1603,6 +1625,7 @@ async function borrarSemana(sem) {
     sessionStorage.setItem('tc_alumno', selAlumno);
     sessionStorage.setItem('tc_semana', selSemana);
     sessionStorage.setItem('tc_dia', selDia);
+    sessionStorage.setItem('tc_view', 'planner');
     await loadFromSupabase();
   } catch(e) {
     alert('Error al borrar: ' + e.message);
