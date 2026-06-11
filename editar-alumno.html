@@ -223,7 +223,15 @@ function renderInfoBar() {
   `;
 }
 
-let editingId = null; // ID del ejercicio en edición
+let editingId = null;
+
+function escapeStr(s) {
+  return (s||'').replace(/'/g, "\\'");
+}
+
+function escapeAttr(s) {
+  return (s||'').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function renderList() {
   const el = document.getElementById('ex-list-display');
@@ -240,16 +248,15 @@ function renderList() {
     <div class="ex-item${isEditing ? ' editing' : ''}" id="item-${ex.id}"
       ${!isEditing ? `onclick="abrirEdicion(${ex.id})"` : ''}>
       <div class="ex-num">${i + 1}</div>
-      <div class="ex-info" style="${isEditing ? 'flex:1' : 'flex:1'}">
+      <div class="ex-info" style="flex:1;min-width:0">
         <div class="ex-grupo">${ex.grupo_muscular || ''}</div>
         <div class="ex-nombre">${ex.ejercicio}</div>
         ${!isEditing ? `<div class="ex-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga > 0 ? ex.carga + 'kg' : '—'}</div>` : ''}
       </div>
-      ${!isEditing ? `
-        <button class="ex-delete" onclick="event.stopPropagation();eliminarEjercicio(${ex.id}, '${escapeStr(ex.ejercicio)}')" title="Eliminar">✕</button>
-      ` : `
-        <button class="ex-delete" onclick="cancelarEdicion()" title="Cancelar" style="color:#c8a45a">✕</button>
-      `}
+      ${!isEditing
+        ? `<button class="ex-delete" onclick="event.stopPropagation();eliminarEjercicio(${ex.id}, '${escapeStr(ex.ejercicio)}')" title="Eliminar">✕</button>`
+        : `<button class="ex-delete" onclick="cancelarEdicion()" title="Cancelar" style="color:#c8a45a">✕</button>`
+      }
       ${isEditing ? `
         <div class="ex-edit-form" onclick="event.stopPropagation()">
           <div class="ex-edit-row">
@@ -275,10 +282,10 @@ function renderList() {
               <label>Carga (kg)</label>
               <input type="number" id="edit-carga-${ex.id}" value="${ex.carga}" min="0" step="0.5" style="width:80px">
             </div>
-            <div class="ex-edit-actions">
-              <button class="btn-save-inline" onclick="guardarEdicion(${ex.id})">Guardar</button>
-              <button class="btn-cancel-inline" onclick="cancelarEdicion()">Cancelar</button>
-            </div>
+          </div>
+          <div class="ex-edit-actions">
+            <button class="btn-save-inline" onclick="guardarEdicion(${ex.id})">Guardar</button>
+            <button class="btn-cancel-inline" onclick="cancelarEdicion()">Cancelar</button>
           </div>
           <div id="edit-status-${ex.id}" class="status-msg"></div>
         </div>
@@ -287,16 +294,11 @@ function renderList() {
   }).join('');
 }
 
-function escapeAttr(s) {
-  return (s||'').replace(/"/g, '&quot;');
-}
-
 function abrirEdicion(id) {
   editingId = id;
   renderList();
-  // Focus primer campo
   setTimeout(() => {
-    const el = document.getElementById(`edit-grupo-${id}`);
+    const el = document.getElementById('edit-grupo-' + id);
     if (el) el.focus();
   }, 30);
 }
@@ -307,12 +309,12 @@ function cancelarEdicion() {
 }
 
 async function guardarEdicion(id) {
-  const grupo  = document.getElementById(`edit-grupo-${id}`).value.trim();
-  const nombre = document.getElementById(`edit-nombre-${id}`).value.trim();
-  const series = parseInt(document.getElementById(`edit-series-${id}`).value) || 0;
-  const reps   = parseInt(document.getElementById(`edit-reps-${id}`).value) || 0;
-  const carga  = parseFloat(document.getElementById(`edit-carga-${id}`).value) || 0;
-  const status = document.getElementById(`edit-status-${id}`);
+  const grupo  = document.getElementById('edit-grupo-'  + id).value.trim();
+  const nombre = document.getElementById('edit-nombre-' + id).value.trim();
+  const series = parseInt(document.getElementById('edit-series-' + id).value) || 0;
+  const reps   = parseInt(document.getElementById('edit-reps-'   + id).value) || 0;
+  const carga  = parseFloat(document.getElementById('edit-carga-' + id).value) || 0;
+  const status = document.getElementById('edit-status-' + id);
 
   if (!grupo || !nombre || !series) {
     showStatus(status, 'error', 'Completá grupo, ejercicio y series.');
@@ -329,17 +331,15 @@ async function guardarEdicion(id) {
     });
     if (!res.ok) throw new Error(await res.text());
 
-    // Actualizar local
     const idx = ejercicios.findIndex(e => e.id === id);
     if (idx !== -1) ejercicios[idx] = { ...ejercicios[idx], grupo_muscular: grupo, ejercicio: nombre, series, reps, carga };
 
     editingId = null;
     renderList();
 
-    // Mostrar feedback breve en el status global
     const statusList = document.getElementById('status-list');
     showStatus(statusList, 'success', `✓ ${nombre} actualizado.`);
-    setTimeout(() => statusList.style.display = 'none', 2000);
+    setTimeout(() => { statusList.style.display = 'none'; }, 2000);
 
   } catch(e) {
     showStatus(status, 'error', 'Error: ' + e.message);
