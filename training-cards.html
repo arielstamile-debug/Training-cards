@@ -1096,14 +1096,18 @@ function renderPlanner() {
               const hasData = diasConEjercicios.has(d);
               const isSelected = selSemana === parseInt(sem) && selDia === d;
               // Todos los días tienen lápiz (para agregar o editar)
-              return `<div style="display:flex;align-items:center;gap:3px">
+              return `<div style="display:flex;align-items:center;gap:2px">
                 <div class="day-chip ${hasData?'has-data':'no-data'}${isSelected?' selected':''}"
                   onclick="selectFromPlanner(${sem},${d})"
                   >D${d}</div>
                 <div title="Editar día" onclick="editarDia(${sem},${d})"
-                  style="width:22px;height:22px;border-radius:5px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s;flex-shrink:0"
+                  style="width:20px;height:20px;border-radius:4px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;flex-shrink:0"
                   onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
                   onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
+                <div title="Borrar día" onclick="event.stopPropagation();borrarDia(${sem},${d})"
+                  style="width:20px;height:20px;border-radius:4px;background:#fff0f0;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;font-weight:700;color:#e05555;transition:all .15s;flex-shrink:0"
+                  onmouseover="this.style.background='#fecaca'"
+                  onmouseout="this.style.background='#fff0f0'">×</div>
               </div>`;
             }).join('');
             const totalEx = rows.filter(r => r.s===parseInt(sem)).length;
@@ -1116,6 +1120,10 @@ function renderPlanner() {
                   style="width:26px;height:26px;border-radius:6px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;flex-shrink:0;transition:all .15s"
                   onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
                   onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">⧉</div>` : ''}
+                <div title="Borrar semana" onclick="event.stopPropagation();borrarSemana(${sem})"
+                  style="width:26px;height:26px;border-radius:6px;background:#fff0f0;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;color:#e05555;flex-shrink:0;transition:all .15s"
+                  onmouseover="this.style.background='#fecaca'"
+                  onmouseout="this.style.background='#fff0f0'">×</div>
               </div>`;
           }).join('')}
         </div>
@@ -1553,6 +1561,51 @@ async function confirmarExtender() {
     status.textContent = 'Error: ' + e.message;
     btn.textContent = 'Generar semanas';
     btn.disabled = false;
+  }
+}
+
+
+// ── BORRAR DÍA / SEMANA ──────────────────────────────────────────────────
+async function borrarDia(sem, dia) {
+  if (!confirm(`¿Borrar S${sem} D${dia} y todos sus ejercicios?`)) return;
+  const alumnoId = DB[selAlumno].alumno_id;
+  const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+  try {
+    // Get sesion id
+    const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${sem}&dia=eq.${dia}&select=id`, { headers: hdrs });
+    const sesiones = await resSes.json();
+    for (const ses of sesiones) {
+      await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
+      await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
+    }
+    sessionStorage.setItem('tc_alumno', selAlumno);
+    sessionStorage.setItem('tc_semana', selSemana);
+    sessionStorage.setItem('tc_dia', selDia);
+    await loadFromSupabase();
+  } catch(e) {
+    alert('Error al borrar: ' + e.message);
+  }
+}
+
+async function borrarSemana(sem) {
+  if (!confirm(`¿Borrar la semana S${sem} completa con todos sus días y ejercicios?`)) return;
+  const alumnoId = DB[selAlumno].alumno_id;
+  const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+  try {
+    const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${sem}&select=id`, { headers: hdrs });
+    const sesiones = await resSes.json();
+    for (const ses of sesiones) {
+      await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
+      await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
+    }
+    sessionStorage.setItem('tc_alumno', selAlumno);
+    sessionStorage.setItem('tc_semana', selSemana);
+    sessionStorage.setItem('tc_dia', selDia);
+    await loadFromSupabase();
+  } catch(e) {
+    alert('Error al borrar: ' + e.message);
   }
 }
 
