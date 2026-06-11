@@ -1134,7 +1134,7 @@ function renderPlanner() {
             const totalEx = rows.filter(r => r.s===parseInt(sem)).length;
             return `
               <div class="week-row ${selSemana===parseInt(sem)?'active-week':''}" style="border-color:${selSemana===parseInt(sem)?t.accent:'#e8e4de'}">
-                <div class="week-label" style="color:${t.text}">S${sem}</div>
+                <div class="week-label" style="color:${t.text};cursor:pointer" onclick="selectSemanaFromPlanner(${sem})">S${sem}</div>
                 <div class="day-chips">${diasHtml}</div>
                 <div class="week-count" style="color:${t.text2}">${totalEx} ej.</div>
                 ${totalEx > 0 ? `<div title="Copiar semana" onclick="event.stopPropagation();abrirCopyModal(${sem})"
@@ -1150,6 +1150,15 @@ function renderPlanner() {
         </div>
       `).join('')}
     </div>`;
+}
+
+function selectSemanaFromPlanner(sem) {
+  selSemana = parseInt(sem);
+  const dias = getDias(selAlumno, selSemana);
+  selDia = dias.includes(selDia) ? selDia : dias[0];
+  renderSidebar();
+  renderCard();
+  renderPlanner();
 }
 
 function selectFromPlanner(sem, dia) {
@@ -1594,16 +1603,31 @@ async function borrarDia(sem, dia) {
   const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
   try {
-    // Get sesion id
     const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${sem}&dia=eq.${dia}&select=id`, { headers: hdrs });
     const sesiones = await resSes.json();
     for (const ses of sesiones) {
       await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
       await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
     }
+
+    // Find where to land: prev day in same semana, or last day of prev semana
+    const diasEnSem = getDias(selAlumno, parseInt(sem)).filter(d => d !== dia);
+    let targetSem = parseInt(sem);
+    let targetDia;
+    if (diasEnSem.length > 0) {
+      // Stay in same semana, go to closest previous day
+      targetDia = [...diasEnSem].filter(d => d < dia).pop() || diasEnSem[0];
+    } else {
+      // No more days in this semana — go to prev semana
+      const sems = getSemanas(selAlumno).filter(s => s < parseInt(sem));
+      targetSem = sems.length > 0 ? sems[sems.length - 1] : getSemanas(selAlumno)[0];
+      const prevDias = getDias(selAlumno, targetSem);
+      targetDia = prevDias[prevDias.length - 1] || prevDias[0];
+    }
+
     sessionStorage.setItem('tc_alumno', selAlumno);
-    sessionStorage.setItem('tc_semana', selSemana);
-    sessionStorage.setItem('tc_dia', selDia);
+    sessionStorage.setItem('tc_semana', targetSem);
+    sessionStorage.setItem('tc_dia', targetDia);
     sessionStorage.setItem('tc_view', 'planner');
     await loadFromSupabase();
   } catch(e) {
@@ -1623,9 +1647,19 @@ async function borrarSemana(sem) {
       await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
       await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=eq.${ses.id}`, { method: 'DELETE', headers: hdrs });
     }
+
+    // Land on previous semana, last day
+    const semsRestantes = getSemanas(selAlumno).filter(s => s !== parseInt(sem));
+    const prevSems = semsRestantes.filter(s => s < parseInt(sem));
+    const targetSem = prevSems.length > 0
+      ? prevSems[prevSems.length - 1]
+      : (semsRestantes.length > 0 ? semsRestantes[0] : parseInt(sem));
+    const prevDias = getDias(selAlumno, targetSem);
+    const targetDia = prevDias[prevDias.length - 1] || prevDias[0];
+
     sessionStorage.setItem('tc_alumno', selAlumno);
-    sessionStorage.setItem('tc_semana', selSemana);
-    sessionStorage.setItem('tc_dia', selDia);
+    sessionStorage.setItem('tc_semana', targetSem);
+    sessionStorage.setItem('tc_dia', targetDia || 1);
     sessionStorage.setItem('tc_view', 'planner');
     await loadFromSupabase();
   } catch(e) {
