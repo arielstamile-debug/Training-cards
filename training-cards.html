@@ -775,7 +775,7 @@ function renderCard() {
 
 function selectAlumno(name) {
   selAlumno=name; selSemana=getSemanas(name)[0]; selDia=getDias(name,selSemana)[0];
-  renderSidebar(); renderCard();
+  renderSidebar(); renderCard(); renderPlanner();
   document.getElementById('extend-btn').disabled = false;
 }
 function selectSemana(s) {
@@ -1047,18 +1047,33 @@ function renderPlanner() {
 
   const t    = getTheme(DB[selAlumno].objetivo);
   const rows = DB[selAlumno].rows;
+  const sesionesList = DB[selAlumno].sesiones || [];
 
-  // Group by mes → semana → dia
+  // Group by mes → semana → dia — incluir TANTO ejercicios como sesiones vacías
   const meses = {};
+  // Primero las sesiones (incluye vacías)
+  sesionesList.forEach(r => {
+    const mes = r.mes || 1;
+    if (!meses[mes]) meses[mes] = {};
+    if (!meses[mes][r.s]) meses[mes][r.s] = new Set();
+    // Solo marcar como "con datos" si tiene ejercicios
+    // Registrar la sesion para que aparezca el día
+    if (!meses[mes][r.s]._dias) meses[mes][r.s]._dias = new Set();
+    meses[mes][r.s]._dias.add(r.d);
+  });
+  // Luego los rows con ejercicios (marcar días como con datos)
   rows.forEach(r => {
     const mes = r.mes || 1;
     if (!meses[mes]) meses[mes] = {};
     if (!meses[mes][r.s]) meses[mes][r.s] = new Set();
     meses[mes][r.s].add(r.d);
+    if (!meses[mes][r.s]._dias) meses[mes][r.s]._dias = new Set();
+    meses[mes][r.s]._dias.add(r.d);
   });
 
-  // Get max dias per semana
-  const maxDias = Math.max(...rows.map(r => r.d), 4);
+  // Get max dias across all sesiones and rows
+  const allDias = [...rows.map(r=>r.d), ...sesionesList.map(r=>r.d)];
+  const maxDias = allDias.length > 0 ? Math.max(...allDias) : 4;
 
   const totalSemanas = Object.values(meses).reduce((acc, sem) => acc + Object.keys(sem).length, 0);
   const totalEjercicios = rows.length;
@@ -1075,24 +1090,21 @@ function renderPlanner() {
         <div class="month-block">
           <div class="month-label">Mes ${mes}</div>
           ${Object.keys(meses[mes]).sort((a,b)=>a-b).map(sem => {
-            const diasConData = meses[mes][sem];
-            const diasHtml = Array.from({length: maxDias}, (_,i) => i+1).map(d => {
-              const hasData = diasConData.has(d);
+            const diasConEjercicios = meses[mes][sem];          // días con ejercicios
+            const todosLosDias = meses[mes][sem]._dias || new Set(); // todos los días (incluso vacíos)
+            const diasHtml = [...todosLosDias].sort((a,b)=>a-b).map(d => {
+              const hasData = diasConEjercicios.has(d);
               const isSelected = selSemana === parseInt(sem) && selDia === d;
-              if (hasData) {
-                return `<div style="display:flex;align-items:center;gap:3px">
-                  <div class="day-chip has-data${isSelected?' selected':''}"
-                    onclick="selectFromPlanner(${sem},${d})"
-                    >D${d}</div>
-                  <div title="Editar día" onclick="editarDia(${sem},${d})"
-                    style="width:22px;height:22px;border-radius:5px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s;flex-shrink:0"
-                    onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
-                    onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
-                </div>`;
-              }
-              return `<div class="day-chip no-data${isSelected?' selected':''}"
-                onclick="selectFromPlanner(${sem},${d})"
-                >D${d}</div>`;
+              // Todos los días tienen lápiz (para agregar o editar)
+              return `<div style="display:flex;align-items:center;gap:3px">
+                <div class="day-chip ${hasData?'has-data':'no-data'}${isSelected?' selected':''}"
+                  onclick="selectFromPlanner(${sem},${d})"
+                  >D${d}</div>
+                <div title="Editar día" onclick="editarDia(${sem},${d})"
+                  style="width:22px;height:22px;border-radius:5px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s;flex-shrink:0"
+                  onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
+                  onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
+              </div>`;
             }).join('');
             const totalEx = rows.filter(r => r.s===parseInt(sem)).length;
             return `
