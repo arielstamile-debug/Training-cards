@@ -1121,7 +1121,7 @@ function renderPlanner() {
                 <div class="day-chip ${hasData?'has-data':'no-data'}${isSelected?' selected':''}"
                   onclick="selectFromPlanner(${sem},${d})"
                   >D${d}</div>
-                <div title="Editar día" onclick="editarDia(${sem},${d})"
+                <div title="Editar día" onclick="event.stopPropagation();editarDia(${sem},${d})"
                   style="width:20px;height:20px;border-radius:4px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;flex-shrink:0"
                   onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
                   onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
@@ -1133,9 +1133,9 @@ function renderPlanner() {
             }).join('');
             const totalEx = rows.filter(r => r.s===parseInt(sem)).length;
             return `
-              <div class="week-row ${selSemana===parseInt(sem)?'active-week':''}" style="border-color:${selSemana===parseInt(sem)?t.accent:'#e8e4de'}">
-                <div class="week-label" style="color:${t.text};cursor:pointer" onclick="selectSemanaFromPlanner(${sem})">S${sem}</div>
-                <div class="day-chips">${diasHtml}</div>
+              <div class="week-row ${selSemana===parseInt(sem)?'active-week':''}" style="border-color:${selSemana===parseInt(sem)?t.accent:'#e8e4de'}" onclick="selectSemanaFromPlanner(${sem})">
+                <div class="week-label" style="color:${t.text}">S${sem}</div>
+                <div class="day-chips" onclick="event.stopPropagation()">${diasHtml}</div>
                 <div class="week-count" style="color:${t.text2}">${totalEx} ej.</div>
                 ${totalEx > 0 ? `<div title="Copiar semana" onclick="event.stopPropagation();abrirCopyModal(${sem})"
                   style="width:26px;height:26px;border-radius:6px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;flex-shrink:0;transition:all .15s"
