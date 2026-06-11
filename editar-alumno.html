@@ -66,6 +66,23 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 
 .skeleton{background:#f0ede8;border-radius:6px;animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Inline edit */
+.ex-item{cursor:pointer}
+.ex-item.editing{border-color:#c8a45a;background:#fdf8f0;flex-wrap:wrap;align-items:flex-start}
+.ex-item.editing .ex-num{margin-top:2px}
+.ex-edit-form{width:100%;margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.ex-edit-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.ex-edit-field{display:flex;flex-direction:column;gap:4px}
+.ex-edit-field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
+.ex-edit-field input{padding:8px 10px;border:1.5px solid #e8e4de;border-radius:7px;font-size:13px;font-family:inherit;color:#1a1714;outline:none;transition:border .15s;background:#fff}
+.ex-edit-field input:focus{border-color:#c8a45a}
+.ex-edit-actions{display:flex;gap:6px;margin-top:2px}
+.btn-save-inline{padding:8px 16px;background:#1a1714;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-save-inline:hover{background:#333}
+.btn-cancel-inline{padding:8px 14px;background:#f0ede8;color:#8a8278;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-done{width:100%;padding:14px;background:#c8a45a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-done:hover{background:#b8956a}
 </style>
 </head>
 <body>
@@ -138,6 +155,10 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
     <div id="status-list" class="status-msg"></div>
   </div>
 
+  <button class="btn-done" onclick="volverAlPlanificador()">
+    ✓ Terminado — Volver al planificador
+  </button>
+
 </div>
 
 <script>
@@ -202,6 +223,8 @@ function renderInfoBar() {
   `;
 }
 
+let editingId = null; // ID del ejercicio en edición
+
 function renderList() {
   const el = document.getElementById('ex-list-display');
   document.getElementById('ex-count').textContent = ejercicios.length ? `(${ejercicios.length})` : '';
@@ -211,21 +234,120 @@ function renderList() {
     return;
   }
 
-  el.innerHTML = ejercicios.map((ex, i) => `
-    <div class="ex-item" id="item-${ex.id}">
+  el.innerHTML = ejercicios.map((ex, i) => {
+    const isEditing = editingId === ex.id;
+    return `
+    <div class="ex-item${isEditing ? ' editing' : ''}" id="item-${ex.id}"
+      ${!isEditing ? `onclick="abrirEdicion(${ex.id})"` : ''}>
       <div class="ex-num">${i + 1}</div>
-      <div class="ex-info">
+      <div class="ex-info" style="${isEditing ? 'flex:1' : 'flex:1'}">
         <div class="ex-grupo">${ex.grupo_muscular || ''}</div>
         <div class="ex-nombre">${ex.ejercicio}</div>
-        <div class="ex-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga > 0 ? ex.carga + 'kg' : '—'}</div>
+        ${!isEditing ? `<div class="ex-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga > 0 ? ex.carga + 'kg' : '—'}</div>` : ''}
       </div>
-      <button class="ex-delete" onclick="eliminarEjercicio(${ex.id}, '${escapeStr(ex.ejercicio)}')" title="Eliminar">✕</button>
-    </div>
-  `).join('');
+      ${!isEditing ? `
+        <button class="ex-delete" onclick="event.stopPropagation();eliminarEjercicio(${ex.id}, '${escapeStr(ex.ejercicio)}')" title="Eliminar">✕</button>
+      ` : `
+        <button class="ex-delete" onclick="cancelarEdicion()" title="Cancelar" style="color:#c8a45a">✕</button>
+      `}
+      ${isEditing ? `
+        <div class="ex-edit-form" onclick="event.stopPropagation()">
+          <div class="ex-edit-row">
+            <div class="ex-edit-field" style="flex:1;min-width:120px">
+              <label>Grupo muscular</label>
+              <input type="text" id="edit-grupo-${ex.id}" value="${escapeAttr(ex.grupo_muscular)}" list="grupos-list">
+            </div>
+            <div class="ex-edit-field" style="flex:2;min-width:160px">
+              <label>Ejercicio</label>
+              <input type="text" id="edit-nombre-${ex.id}" value="${escapeAttr(ex.ejercicio)}">
+            </div>
+          </div>
+          <div class="ex-edit-row">
+            <div class="ex-edit-field">
+              <label>Series</label>
+              <input type="number" id="edit-series-${ex.id}" value="${ex.series}" min="1" max="20" style="width:64px">
+            </div>
+            <div class="ex-edit-field">
+              <label>Reps</label>
+              <input type="number" id="edit-reps-${ex.id}" value="${ex.reps}" min="0" max="100" style="width:64px">
+            </div>
+            <div class="ex-edit-field">
+              <label>Carga (kg)</label>
+              <input type="number" id="edit-carga-${ex.id}" value="${ex.carga}" min="0" step="0.5" style="width:80px">
+            </div>
+            <div class="ex-edit-actions">
+              <button class="btn-save-inline" onclick="guardarEdicion(${ex.id})">Guardar</button>
+              <button class="btn-cancel-inline" onclick="cancelarEdicion()">Cancelar</button>
+            </div>
+          </div>
+          <div id="edit-status-${ex.id}" class="status-msg"></div>
+        </div>
+      ` : ''}
+    </div>`;
+  }).join('');
 }
 
-function escapeStr(s) {
-  return (s||'').replace(/'/g, "\\'");
+function escapeAttr(s) {
+  return (s||'').replace(/"/g, '&quot;');
+}
+
+function abrirEdicion(id) {
+  editingId = id;
+  renderList();
+  // Focus primer campo
+  setTimeout(() => {
+    const el = document.getElementById(`edit-grupo-${id}`);
+    if (el) el.focus();
+  }, 30);
+}
+
+function cancelarEdicion() {
+  editingId = null;
+  renderList();
+}
+
+async function guardarEdicion(id) {
+  const grupo  = document.getElementById(`edit-grupo-${id}`).value.trim();
+  const nombre = document.getElementById(`edit-nombre-${id}`).value.trim();
+  const series = parseInt(document.getElementById(`edit-series-${id}`).value) || 0;
+  const reps   = parseInt(document.getElementById(`edit-reps-${id}`).value) || 0;
+  const carga  = parseFloat(document.getElementById(`edit-carga-${id}`).value) || 0;
+  const status = document.getElementById(`edit-status-${id}`);
+
+  if (!grupo || !nombre || !series) {
+    showStatus(status, 'error', 'Completá grupo, ejercicio y series.');
+    return;
+  }
+
+  showStatus(status, 'loading', 'Guardando...');
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ grupo_muscular: grupo, ejercicio: nombre, series, reps, carga })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Actualizar local
+    const idx = ejercicios.findIndex(e => e.id === id);
+    if (idx !== -1) ejercicios[idx] = { ...ejercicios[idx], grupo_muscular: grupo, ejercicio: nombre, series, reps, carga };
+
+    editingId = null;
+    renderList();
+
+    // Mostrar feedback breve en el status global
+    const statusList = document.getElementById('status-list');
+    showStatus(statusList, 'success', `✓ ${nombre} actualizado.`);
+    setTimeout(() => statusList.style.display = 'none', 2000);
+
+  } catch(e) {
+    showStatus(status, 'error', 'Error: ' + e.message);
+  }
+}
+
+function volverAlPlanificador() {
+  window.location.href = 'training-cards.html';
 }
 
 // ── AGREGAR ───────────────────────────────────────────────────────────
