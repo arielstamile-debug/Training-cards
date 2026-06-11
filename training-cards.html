@@ -1484,27 +1484,25 @@ async function deleteExFromModal() {
 
 
 // ── EXTENDER PLANIFICACIÓN ───────────────────────────────────────────────
-let extendSemanasCount = 4;
-let extendDiasSelected = new Set();
+// ── EXTEND MODAL STATE ────────────────────────────────────────────────────
+let extendSemanasCount = 0;
+// { dia: Set<semana> } — qué semanas tiene asignadas cada día seleccionado
+let extendDiasMap = {};
 
 function abrirExtenderModal() {
   if (!selAlumno || !DB[selAlumno]) return;
-  extendSemanasCount = 4;
-  
-  // Default: all days the alumno currently trains (across all semanas)
-  const todasLasSems = getSemanas(selAlumno);
-  const todosLosDias = new Set();
-  todasLasSems.forEach(s => getDias(selAlumno, s).forEach(d => todosLosDias.add(d)));
-  extendDiasSelected = todosLosDias;
+  extendSemanasCount = 0;
+  extendDiasMap = {};
 
-  const sems = todasLasSems;
+  const sems = getSemanas(selAlumno);
   const maxSem = Math.max(...sems);
-  
-  document.getElementById('extend-modal-sub').textContent = 
-    `${selAlumno} · ${sems.length} semanas hasta S${maxSem}`;
-  
-  renderExtendDias();
+
+  document.getElementById('extend-modal-sub').textContent =
+    `${selAlumno} · ${sems.length} semanas · hasta S${maxSem}`;
+
+  document.getElementById('extend-count').textContent = '0';
   updateExtendPreview();
+  renderExtendDiasSection();
   document.getElementById('extend-status').style.display = 'none';
   document.getElementById('extend-modal').style.display = 'flex';
 }
@@ -1514,7 +1512,7 @@ function cerrarExtenderModal() {
 }
 
 function cambiarSemanas(delta) {
-  extendSemanasCount = Math.max(1, Math.min(12, extendSemanasCount + delta));
+  extendSemanasCount = Math.max(0, Math.min(12, extendSemanasCount + delta));
   document.getElementById('extend-count').textContent = extendSemanasCount;
   updateExtendPreview();
 }
@@ -1522,84 +1520,178 @@ function cambiarSemanas(delta) {
 function updateExtendPreview() {
   const sems = getSemanas(selAlumno);
   const maxSem = Math.max(...sems);
-  const desde = maxSem + 1;
-  const hasta = maxSem + extendSemanasCount;
-  document.getElementById('extend-preview').textContent = 
-    `Se generarán S${desde} a S${hasta} (${extendSemanasCount} semana${extendSemanasCount !== 1 ? 's' : ''} · ${extendDiasSelected.size} días c/u)`;
+  const el = document.getElementById('extend-preview');
+  if (extendSemanasCount === 0) {
+    el.textContent = 'No se agregarán semanas nuevas';
+  } else {
+    const desde = maxSem + 1;
+    const hasta = maxSem + extendSemanasCount;
+    el.textContent = `Se generarán S${desde} a S${hasta} (${extendSemanasCount} semana${extendSemanasCount !== 1 ? 's' : ''} vacías)`;
+  }
 }
 
-function renderExtendDias() {
+function renderExtendDiasSection() {
   const dias = [1,2,3,4,5,6,7];
-  const labels = ['D1','D2','D3','D4','D5','D6','D7'];
-  document.getElementById('extend-dias').innerHTML = dias.map((d,i) => `
-    <button id="extdia-${d}" onclick="toggleExtendDia(${d})"
-      style="padding:8px 14px;border-radius:8px;border:1.5px solid ${extendDiasSelected.has(d)?'#c8a45a':'#e8e4de'};
-      background:${extendDiasSelected.has(d)?'#c8a45a':'#fff'};
-      color:${extendDiasSelected.has(d)?'#fff':'#1a1714'};
-      font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">
-      ${labels[i]}
-    </button>`).join('');
+  const sems = getSemanas(selAlumno);
+
+  const html = dias.map(d => {
+    const selected = extendDiasMap[d] !== undefined;
+    const assignedSems = extendDiasMap[d] || new Set();
+
+    const semGrid = selected ? `
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+        ${sems.map(s => {
+          const on = assignedSems.has(s);
+          // Check if this semana already has this dia
+          const exists = (DB[selAlumno].sesiones||[]).some(r => r.s===s && r.d===d);
+          return `<button onclick="toggleExtendSemForDia(${d},${s})"
+            style="padding:5px 10px;border-radius:7px;border:1.5px solid ${on?'#c8a45a':'#e8e4de'};
+            background:${on?'#c8a45a':'#fff'};color:${on?'#fff':exists?'#c4bdb5':'#1a1714'};
+            font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;
+            position:relative"
+            title="${exists?'Ya existe este día en esta semana':''}">
+            S${s}${exists?' ·':''}
+          </button>`;
+        }).join('')}
+      </div>` : '';
+
+    return `<div style="margin-bottom:${selected?'12px':'4px'};padding:${selected?'10px':'6px 10px'};
+      border-radius:8px;border:1.5px solid ${selected?'#c8a45a':'#e8e4de'};
+      background:${selected?'#fdf8f0':'#fff'};transition:all .15s">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="toggleExtendDia(${d})"
+          style="padding:6px 14px;border-radius:7px;border:1.5px solid ${selected?'#c8a45a':'#e8e4de'};
+          background:${selected?'#c8a45a':'#fff'};color:${selected?'#fff':'#1a1714'};
+          font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;flex-shrink:0">
+          D${d}
+        </button>
+        ${selected
+          ? `<span style="font-size:11px;color:#8a8278">${assignedSems.size > 0
+              ? `${assignedSems.size} semana${assignedSems.size!==1?'s':''} seleccionada${assignedSems.size!==1?'s':''}`
+              : 'Elegí las semanas →'}</span>`
+          : `<span style="font-size:11px;color:#c4bdb5">sin asignar</span>`}
+      </div>
+      ${semGrid}
+    </div>`;
+  }).join('');
+
+  document.getElementById('extend-dias').innerHTML = html;
 }
 
 function toggleExtendDia(d) {
-  if (extendDiasSelected.has(d)) {
-    if (extendDiasSelected.size > 1) extendDiasSelected.delete(d);
+  if (extendDiasMap[d] !== undefined) {
+    delete extendDiasMap[d];
   } else {
-    extendDiasSelected.add(d);
+    extendDiasMap[d] = new Set();
   }
-  renderExtendDias();
-  updateExtendPreview();
+  renderExtendDiasSection();
+}
+
+function toggleExtendSemForDia(d, s) {
+  if (!extendDiasMap[d]) extendDiasMap[d] = new Set();
+  if (extendDiasMap[d].has(s)) {
+    extendDiasMap[d].delete(s);
+  } else {
+    extendDiasMap[d].add(s);
+  }
+  renderExtendDiasSection();
 }
 
 async function confirmarExtender() {
   if (!selAlumno || !DB[selAlumno]) return;
-  const btn = document.getElementById('extend-confirm-btn');
+  const btn    = document.getElementById('extend-confirm-btn');
   const status = document.getElementById('extend-status');
-  btn.textContent = 'Generando...';
-  btn.disabled = true;
 
-  const sems = getSemanas(selAlumno);
-  const maxSem = Math.max(...sems);
+  // Validate: at least one action
+  const hasSemanas = extendSemanasCount > 0;
+  const diasEntries = Object.entries(extendDiasMap).filter(([d, sems]) => sems.size > 0);
+  const hasDias = diasEntries.length > 0;
+  if (!hasSemanas && !hasDias) {
+    status.className = 'status-msg error';
+    status.style.display = 'block';
+    status.textContent = 'Agregá semanas o asigná días a semanas existentes.';
+    return;
+  }
+
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+  status.style.display = 'none';
+
+  const sems     = getSemanas(selAlumno);
+  const maxSem   = Math.max(...sems);
   const alumnoId = DB[selAlumno].alumno_id;
-  const dias = [...extendDiasSelected].sort((a,b) => a-b);
 
   try {
     const sesionesToCreate = [];
-    for (let s = maxSem + 1; s <= maxSem + extendSemanasCount; s++) {
-      const mes = Math.ceil(s / 4);
-      for (const dia of dias) {
-        sesionesToCreate.push({ alumno_id: alumnoId, semana: s, dia, mes });
+
+    // 1. Nuevas semanas vacías (con días por defecto sin asignar — se crean sin días,
+    //    el usuario luego agrega días sueltos o copia rutinas)
+    // Solo crear las semanas vacías — sin días predefinidos.
+    // Para que aparezcan en el planner necesitamos al menos 1 sesión por semana.
+    // Usamos dia=0 como placeholder... mejor: NO crear sesiones vacías, el planner
+    // ya soporta semanas sin días. En cambio creamos sesiones con los días que el alumno
+    // ya tiene actualmente (igual que antes), para que las semanas aparezcan útiles.
+    if (hasSemanas) {
+      const diasActuales = [...new Set(
+        (DB[selAlumno].sesiones||[]).map(r => r.d).filter(d => d > 0)
+      )].sort((a,b) => a-b);
+      // Si no tiene días previos, usar D1 como mínimo
+      const diasBase = diasActuales.length > 0 ? diasActuales : [1];
+      for (let s = maxSem + 1; s <= maxSem + extendSemanasCount; s++) {
+        const mes = Math.ceil(s / 4);
+        for (const dia of diasBase) {
+          sesionesToCreate.push({ alumno_id: alumnoId, semana: s, dia, mes });
+        }
       }
     }
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal,resolution=ignore-duplicates'
-      },
-      body: JSON.stringify(sesionesToCreate)
-    });
-    if (!res.ok) throw new Error(await res.text());
+    // 2. Días sueltos en semanas existentes
+    if (hasDias) {
+      for (const [dStr, semsSet] of diasEntries) {
+        const dia = parseInt(dStr);
+        for (const s of semsSet) {
+          const mes = Math.ceil(s / 4);
+          sesionesToCreate.push({ alumno_id: alumnoId, semana: s, dia, mes });
+        }
+      }
+    }
+
+    if (sesionesToCreate.length > 0) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal,resolution=ignore-duplicates'
+        },
+        body: JSON.stringify(sesionesToCreate)
+      });
+      if (!res.ok) throw new Error(await res.text());
+    }
+
+    const partes = [];
+    if (hasSemanas) partes.push(`${extendSemanasCount} semana${extendSemanasCount!==1?'s':''} generada${extendSemanasCount!==1?'s':''}`);
+    if (hasDias) partes.push(`${diasEntries.reduce((acc,[,s])=>acc+s.size,0)} sesión/es de días asignada${diasEntries.reduce((acc,[,s])=>acc+s.size,0)!==1?'s':''}`);
 
     status.className = 'status-msg success';
-    status.textContent = `✓ ${extendSemanasCount} semanas generadas. Podés copiar rutinas desde el planificador.`;
-    btn.textContent = 'Generar semanas';
+    status.style.display = 'block';
+    status.textContent = '✓ ' + partes.join(' · ');
+    btn.textContent = 'Aplicar';
     btn.disabled = false;
 
-    // Reload to reflect new semanas
     sessionStorage.setItem('tc_alumno', selAlumno);
     sessionStorage.setItem('tc_semana', selSemana);
     sessionStorage.setItem('tc_dia', selDia);
+    sessionStorage.setItem('tc_view', 'planner');
     await loadFromSupabase();
     cerrarExtenderModal();
 
   } catch(e) {
     status.className = 'status-msg error';
+    status.style.display = 'block';
     status.textContent = 'Error: ' + e.message;
-    btn.textContent = 'Generar semanas';
+    btn.textContent = 'Aplicar';
     btn.disabled = false;
   }
 }
@@ -1777,26 +1869,31 @@ loadFromSupabase();
 
 <!-- EXTEND MODAL -->
 <div id="extend-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)cerrarExtenderModal()">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:480px">
     <div class="modal-title">Extender planificación</div>
     <div class="modal-sub" id="extend-modal-sub"></div>
-    <div style="margin-bottom:16px">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278;margin-bottom:8px">Agregar semanas</div>
+
+    <!-- SECCIÓN 1: Agregar semanas -->
+    <div style="margin-bottom:20px;padding:14px;border-radius:10px;background:#faf8f5;border:1px solid #e8e4de">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#8a8278;margin-bottom:10px">Agregar semanas vacías</div>
       <div style="display:flex;align-items:center;gap:10px">
-        <button onclick="cambiarSemanas(-1)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center">−</button>
-        <div id="extend-count" style="flex:1;text-align:center;font-size:24px;font-weight:800;color:#1a1714">4</div>
-        <button onclick="cambiarSemanas(1)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center">+</button>
+        <button onclick="cambiarSemanas(-1)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">−</button>
+        <div id="extend-count" style="flex:1;text-align:center;font-size:28px;font-weight:800;color:#1a1714">0</div>
+        <button onclick="cambiarSemanas(1)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">+</button>
       </div>
       <div id="extend-preview" style="font-size:12px;color:#8a8278;text-align:center;margin-top:8px"></div>
     </div>
+
+    <!-- SECCIÓN 2: Agregar días a semanas existentes -->
     <div style="margin-bottom:20px">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278;margin-bottom:8px">Días de entrenamiento</div>
-      <div id="extend-dias" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#8a8278;margin-bottom:10px">Agregar días a semanas existentes</div>
+      <div id="extend-dias" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
-    <div id="extend-status" class="status-msg" style="margin-bottom:12px"></div>
+
+    <div id="extend-status" class="status-msg" style="margin-bottom:12px;display:none"></div>
     <div class="modal-actions">
       <button class="modal-btn-cancel" onclick="cerrarExtenderModal()">Cancelar</button>
-      <button class="modal-btn-confirm" id="extend-confirm-btn" onclick="confirmarExtender()">Generar semanas</button>
+      <button class="modal-btn-confirm" id="extend-confirm-btn" onclick="confirmarExtender()">Aplicar</button>
     </div>
   </div>
 </div>
