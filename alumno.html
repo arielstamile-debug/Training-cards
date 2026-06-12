@@ -54,15 +54,18 @@ body{font-family:'Inter','Helvetica Neue',sans-serif;min-height:100vh;transition
 
 /* Edit sheet */
 .edit-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center}
-.edit-sheet{border-radius:20px 20px 0 0;padding:24px 20px 48px;width:100%;max-width:480px}
-.edit-sheet-title{font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.4;margin-bottom:16px;text-align:center}
-.edit-field{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
-.edit-field label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;opacity:.5}
-.edit-field input{width:100%;padding:14px;border-radius:12px;border:1.5px solid #e0e0e0;font-size:22px;font-weight:700;text-align:center;font-family:inherit;outline:none;transition:border .15s}
+.edit-sheet{border-radius:20px 20px 0 0;padding:20px 20px 44px;width:100%;max-width:480px}
+.edit-sheet-handle{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 18px}
+.edit-sheet-title{font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}
+.edit-sheet-sub{font-size:12px;opacity:.45;margin-bottom:20px}
+.edit-fields-row{display:flex;gap:10px;margin-bottom:20px}
+.edit-field{display:flex;flex-direction:column;gap:6px;flex:1}
+.edit-field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;opacity:.5;text-align:center}
+.edit-field input{width:100%;padding:14px 8px;border-radius:12px;border:1.5px solid #e0e0e0;font-size:22px;font-weight:700;text-align:center;font-family:inherit;outline:none;transition:border .15s}
 .edit-field input:focus{border-color:#aaa}
 .edit-actions{display:flex;gap:10px}
-.edit-save{flex:1;padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff}
-.edit-cancel{padding:14px 20px;border:none;border-radius:12px;background:#f0f0f0;color:#666;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.edit-save{flex:1;padding:15px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff}
+.edit-cancel{padding:15px 20px;border:none;border-radius:12px;background:#f0f0f0;color:#666;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 
 /* Footer */
 .card-footer{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top-width:1px;border-top-style:solid}
@@ -166,7 +169,10 @@ function resetAll() {
 }
 
 function getVal(i, f) {
-  return overrides[i] && overrides[i][f] !== undefined ? overrides[i][f] : window._DATA.ejercicios[i][f];
+  if (overrides[i] && overrides[i][f] !== undefined) return overrides[i][f];
+  const ex = window._DATA.ejercicios[i];
+  if (f === 'sr') return ex.sr !== undefined ? ex.sr : (ex.s || 0);
+  return ex[f] !== undefined ? ex[f] : 0;
 }
 
 function renderStats(i, ex, t) {
@@ -178,8 +184,8 @@ function renderStats(i, ex, t) {
   const tt = ex.tt || '';
   const td = ex.td || '';
 
-  const chip = (label, value, field, color) => `
-    <div class="stat-chip" style="background:${t.statBg}" onclick="event.stopPropagation();openEdit(${i},'${field}',${typeof value==='number'?value:0})">
+  const chip = (label, value, color) => `
+    <div class="stat-chip" style="background:${t.statBg}">
       <span class="stat-label" style="color:${t.text2}">${label}</span>
       <span class="stat-value" style="color:${color}">${value}</span>
     </div>`;
@@ -191,42 +197,63 @@ function renderStats(i, ex, t) {
     </div>` : '';
 
   container.innerHTML =
-    chip('Series', `${sr}×`, 'sr', t.statText) +
-    chip('Reps', r > 0 ? r : '—', 'r', t.statText2) +
-    chip('Carga', c > 0 ? `${c}kg` : '—', 'c', t.statText2) +
+    chip('Series', `${sr}×`, t.statText) +
+    chip('Reps', r > 0 ? r : '—', t.statText2) +
+    chip('Carga', c > 0 ? `${c}kg` : '—', t.statText2) +
     timeChip('T. Trabajo', tt) +
     timeChip('T. Descanso', td);
 }
 
-function openEdit(idx, field, currentVal) {
-  const t = window._THEME;
-  const labels = { sr:'Series', r:'Reps', c:'Carga (kg)' };
+function openEdit(idx) {
+  const data = window._DATA, t = window._THEME;
+  const ex = data.ejercicios[idx];
+  const ov = overrides[idx] || {};
+  const sr = ov.sr !== undefined ? ov.sr : (ex.sr || ex.s || 0);
+  const r  = ov.r  !== undefined ? ov.r  : (ex.r  || 0);
+  const c  = ov.c  !== undefined ? ov.c  : (ex.c  || 0);
+
   const modal = document.getElementById('edit-modal');
   modal.style.cssText = 'display:flex;align-items:flex-end;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100';
   modal.innerHTML = `
     <div class="edit-sheet" style="background:${t.surface}">
-      <div class="edit-sheet-title" style="color:${t.text}">Ajustar ${labels[field]}</div>
-      <div class="edit-field">
-        <label style="color:${t.text2}">${labels[field]}</label>
-        <input id="edit-input" type="number" value="${currentVal}" min="0" step="${field==='c'?'0.5':'1'}"
-          style="border-color:${t.border};color:${t.text};background:${t.surface2}">
+      <div class="edit-sheet-handle"></div>
+      <div class="edit-sheet-title" style="color:${t.text}">${ex.e}</div>
+      <div class="edit-sheet-sub" style="color:${t.text2}">${(ex.m||'').toLowerCase()} · Ajustá los valores</div>
+      <div class="edit-fields-row">
+        <div class="edit-field">
+          <label style="color:${t.text2}">Series</label>
+          <input id="ei-sr" type="number" value="${sr || ''}" min="0" step="1" placeholder="—"
+            style="border-color:${t.border};color:${t.text};background:${t.surface2}">
+        </div>
+        <div class="edit-field">
+          <label style="color:${t.text2}">Reps</label>
+          <input id="ei-r" type="number" value="${r || ''}" min="0" step="1" placeholder="—"
+            style="border-color:${t.border};color:${t.text};background:${t.surface2}">
+        </div>
+        <div class="edit-field">
+          <label style="color:${t.text2}">Carga kg</label>
+          <input id="ei-c" type="number" value="${c || ''}" min="0" step="0.5" placeholder="—"
+            style="border-color:${t.border};color:${t.text};background:${t.surface2}">
+        </div>
       </div>
       <div class="edit-actions">
-        <button class="edit-save" style="background:${t.accent}" onclick="saveEdit(${idx},'${field}')">Guardar</button>
+        <button class="edit-save" style="background:${t.accent}" onclick="saveEdit(${idx})">Guardar</button>
         <button class="edit-cancel" onclick="closeEdit()">Cancelar</button>
       </div>
     </div>`;
-  setTimeout(()=>document.getElementById('edit-input').focus(),100);
-  modal.onclick = e => { if(e.target===modal) closeEdit(); };
+  setTimeout(() => document.getElementById('ei-sr').focus(), 100);
+  modal.onclick = e => { if (e.target === modal) closeEdit(); };
 }
 
-function saveEdit(idx, field) {
-  const val = parseFloat(document.getElementById('edit-input').value);
-  if (!isNaN(val)) {
-    if (!overrides[idx]) overrides[idx] = {};
-    overrides[idx][field] = val;
-    renderStats(idx, window._DATA.ejercicios[idx], window._THEME);
-  }
+function saveEdit(idx) {
+  const srVal = parseFloat(document.getElementById('ei-sr').value);
+  const rVal  = parseFloat(document.getElementById('ei-r').value);
+  const cVal  = parseFloat(document.getElementById('ei-c').value);
+  if (!overrides[idx]) overrides[idx] = {};
+  if (!isNaN(srVal)) overrides[idx].sr = srVal;
+  if (!isNaN(rVal))  overrides[idx].r  = rVal;
+  if (!isNaN(cVal))  overrides[idx].c  = cVal;
+  renderStats(idx, window._DATA.ejercicios[idx], window._THEME);
   closeEdit();
 }
 function closeEdit() { document.getElementById('edit-modal').style.display='none'; }
@@ -309,13 +336,13 @@ function render() {
 
         <div id="ex-list" class="ex-list">
           ${data.ejercicios.map((ex,i)=>`
-            <div class="ex-item" id="ex-${i}" style="border-bottom-color:${t.rowBorder}" onclick="toggleEx(${i})">
-              <div class="ex-check" id="chk-${i}" style="border-color:${t.checkBorder}">
+            <div class="ex-item" id="ex-${i}" style="border-bottom-color:${t.rowBorder}">
+              <div class="ex-check" id="chk-${i}" style="border-color:${t.checkBorder}" onclick="toggleEx(${i})">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
-              <div class="ex-body">
+              <div class="ex-body" onclick="openEdit(${i})">
                 <div class="ex-name" style="color:${t.text}">${ex.e}</div>
                 <div class="ex-muscle" style="color:${t.text2}">${(ex.m||'').toLowerCase()}</div>
                 <div class="ex-stats-row" id="stats-${i}"></div>
