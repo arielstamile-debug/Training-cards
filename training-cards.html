@@ -386,7 +386,7 @@ async function loadFromSupabase() {
     document.getElementById('db-status').textContent = 'Cargando...';
 
     // Query 1: ejercicios con JOIN
-    const qEj = `${SUPABASE_URL}/rest/v1/ejercicios?select=id,alumno_id,sesion_id,grupo_muscular,ejercicio,series,reps,carga,rm,tiempo_trabajo,tiempo_descanso,sesiones(id,semana,dia,mes,fecha),alumnos(id,nombre,objetivo)&order=sesiones(semana),sesiones(dia),id`;
+    const qEj = `${SUPABASE_URL}/rest/v1/ejercicios?select=id,alumno_id,sesion_id,grupo_muscular,ejercicio,series,reps,carga,rm,tiempo_trabajo,tiempo_descanso,sesiones(id,semana,dia,mes,fecha),alumnos(id,nombre,objetivo)&order=sesiones(semana),sesiones(dia)`;
     // Query 2: sesiones vacías (LEFT JOIN con ejercicios, traer todas)
     const qSes = `${SUPABASE_URL}/rest/v1/sesiones?select=id,alumno_id,semana,dia,mes,fecha,alumnos(id,nombre,objetivo)&order=semana,dia`;
 
@@ -730,7 +730,7 @@ function renderCard() {
   if (!selAlumno) return;
 
   const t = getTheme(DB[selAlumno].objetivo);
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.id-b.id);
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
 
   title.innerHTML = `<span style="color:${t.text}">${selAlumno} — </span><span style="color:${t.accent}">Semana ${selSemana}, Día ${selDia}</span>`;
   meta.style.color = t.text2;
@@ -812,7 +812,7 @@ function selectDia(d) {
 // ── GENERATE STUDENT URL ──────────────────────────────────────────────────
 async function generateURL() {
   if (!selAlumno) return;
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.id-b.id);
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
   if (!ejercicios.length) { alert('No hay ejercicios para este día'); return; }
 
   const payload = {
@@ -821,7 +821,7 @@ async function generateURL() {
     semana:    selSemana,
     dia:       selDia,
     ejercicios: ejercicios.map(ex => ({
-      e: ex.e, m: ex.m, sr: ex.sr, r: ex.r, c: ex.c, tt: ex.tt, td: ex.td
+      id: ex.id, e: ex.e, m: ex.m, sr: ex.sr, r: ex.r, c: ex.c, tt: ex.tt, td: ex.td
     }))
   };
 
@@ -916,7 +916,7 @@ document.addEventListener('click', e => {
 // ── EXPORT PDF ────────────────────────────────────────────────────────────
 function exportPDF() {
   if (!selAlumno) return;
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.id-b.id);
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
   if (!ejercicios.length) { alert('No hay ejercicios para exportar'); return; }
 
   const t = getTheme(DB[selAlumno].objetivo);
@@ -1344,7 +1344,7 @@ async function confirmarCopia() {
 let editingEx = null;
 
 function openEditModalByIndex(idx) {
-  const ex = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.id-b.id)[idx];
+  const ex = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia)[idx];
   openEditModal(ex);
 }
 
