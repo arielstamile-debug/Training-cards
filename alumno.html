@@ -150,7 +150,7 @@ function parseData() {
   try {
     const raw = new URLSearchParams(window.location.search).get('d');
     if (!raw) return null;
-    return JSON.parse(decodeURIComponent(atob(raw)));
+    return JSON.parse(decodeURIComponent(escape(atob(raw))));
   } catch(e){ return null; }
 }
 
