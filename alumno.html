@@ -157,6 +157,24 @@ function parseData() {
 let checked  = new Set();
 let overrides = {};
 
+const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
+const SB_HEADERS = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=minimal'
+};
+
+const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
+const SB_HEADERS = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=minimal'
+};
+
 function toggleEx(idx) {
   if (checked.has(idx)) { checked.delete(idx); } else { checked.add(idx); }
   updateUI();
@@ -208,7 +226,7 @@ function openEdit(idx) {
   const data = window._DATA, t = window._THEME;
   const ex = data.ejercicios[idx];
   const ov = overrides[idx] || {};
-  const sr = ov.sr !== undefined ? ov.sr : (ex.sr || ex.s || 0);
+  const sr = ov.sr !== undefined ? ov.sr : (ex.sr !== undefined ? ex.sr : (ex.s || 0));
   const r  = ov.r  !== undefined ? ov.r  : (ex.r  || 0);
   const c  = ov.c  !== undefined ? ov.c  : (ex.c  || 0);
 
@@ -245,16 +263,51 @@ function openEdit(idx) {
   modal.onclick = e => { if (e.target === modal) closeEdit(); };
 }
 
-function saveEdit(idx) {
+async function saveEdit(idx) {
   const srVal = parseFloat(document.getElementById('ei-sr').value);
   const rVal  = parseFloat(document.getElementById('ei-r').value);
   const cVal  = parseFloat(document.getElementById('ei-c').value);
+
   if (!overrides[idx]) overrides[idx] = {};
   if (!isNaN(srVal)) overrides[idx].sr = srVal;
   if (!isNaN(rVal))  overrides[idx].r  = rVal;
   if (!isNaN(cVal))  overrides[idx].c  = cVal;
+
   renderStats(idx, window._DATA.ejercicios[idx], window._THEME);
+
+  const ex = window._DATA.ejercicios[idx];
+  if (ex.id) {
+    const saveBtn = document.querySelector('#edit-modal .edit-save');
+    if (saveBtn) { saveBtn.textContent = 'Guardando...'; saveBtn.disabled = true; }
+
+    const body = {};
+    if (!isNaN(srVal)) body.series = srVal;
+    if (!isNaN(rVal))  body.reps   = rVal;
+    if (!isNaN(cVal))  body.carga  = cVal;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${ex.id}`, {
+        method: 'PATCH',
+        headers: SB_HEADERS,
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      showSaveFeedback('✓ Guardado');
+    } catch(e) {
+      showSaveFeedback('Error al guardar', true);
+    }
+  }
+
   closeEdit();
+}
+
+function showSaveFeedback(msg, isError = false) {
+  const t = window._THEME;
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = `position:fixed;bottom:32px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;background:${isError ? '#fee2e2' : (t.headerBg || '#1a1714')};color:${isError ? '#991b1b' : '#fff'};z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.15)`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
 }
 function closeEdit() { document.getElementById('edit-modal').style.display='none'; }
 
