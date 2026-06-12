@@ -825,8 +825,7 @@ async function generateURL() {
     }))
   };
 
-  const json    = JSON.stringify(payload);
-  const encoded = btoa(unescape(encodeURIComponent(json)));
+  const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
   const base = window.location.href.replace(/[^/]*$/, '');
   const longUrl = `${base}alumno.html?d=${encoded}`;
 
@@ -856,7 +855,7 @@ async function generateURL() {
     if (res.ok) {
       const short = (await res.text()).trim();
       if (short.startsWith('http')) {
-        window._currentURL = short;
+        // Mostrar el link corto visualmente pero copiar siempre la URL larga
         document.getElementById('modal-url').textContent = short;
       } else {
         document.getElementById('modal-url').textContent = 'Link listo ✓';
