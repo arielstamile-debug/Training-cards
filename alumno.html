@@ -166,15 +166,6 @@ const SB_HEADERS = {
   'Prefer': 'return=minimal'
 };
 
-const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
-const SB_HEADERS = {
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Content-Type': 'application/json',
-  'Prefer': 'return=minimal'
-};
-
 function toggleEx(idx) {
   if (checked.has(idx)) { checked.delete(idx); } else { checked.add(idx); }
   updateUI();
