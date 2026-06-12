@@ -646,6 +646,7 @@ async function eliminarEjercicio(id, nombre) {
 
 // ── HELPERS ───────────────────────────────────────────────────────────
 function showStatus(el, type, msg) {
+  el.style.display = '';
   el.className = `status-msg ${type}`;
   el.textContent = msg;
 }
