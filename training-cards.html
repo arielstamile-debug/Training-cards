@@ -826,7 +826,7 @@ async function generateURL() {
     }))
   };
 
-  const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   const base = window.location.href.replace(/[^/]*$/, '');
   const longUrl = `${base}alumno.html?d=${encoded}`;
 
