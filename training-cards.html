@@ -812,7 +812,7 @@ function selectDia(d) {
 // ── GENERATE STUDENT URL ──────────────────────────────────────────────────
 async function generateURL() {
   if (!selAlumno) return;
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia);
+  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.id-b.id);
   if (!ejercicios.length) { alert('No hay ejercicios para este día'); return; }
 
   const payload = {
