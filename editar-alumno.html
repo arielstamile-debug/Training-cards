@@ -84,6 +84,15 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .btn-done{width:100%;padding:14px;background:#c8a45a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-done:hover{background:#b8956a}
 
+/* Cardio block */
+.section-toggle{display:flex;align-items:center;gap:8px;margin-top:16px;margin-bottom:0;cursor:pointer;user-select:none}
+.section-toggle-label{font-size:12px;font-weight:700;color:#8a8278;letter-spacing:.5px;text-transform:uppercase}
+.section-toggle-icon{font-size:14px;transition:transform .2s}
+.section-toggle.open .section-toggle-icon{transform:rotate(90deg)}
+.cardio-block{margin-top:12px;padding:14px;background:#f7f4ef;border-radius:10px;border:1px solid #ede9e2;display:none}
+.cardio-block.open{display:block}
+.cardio-tag{display:inline-block;padding:3px 10px;background:#e8dfc8;border-radius:20px;font-size:10px;font-weight:700;color:#8a6020;margin-bottom:12px;letter-spacing:.4px;text-transform:uppercase}
+
 /* Drag and drop */
 .ex-drag-handle{display:flex;flex-direction:column;gap:3px;padding:4px 8px 4px 2px;cursor:grab;flex-shrink:0;opacity:.35;transition:opacity .15s}
 .ex-drag-handle:hover{opacity:.7}
@@ -154,6 +163,54 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
         </div>
       </div>
       <button class="btn-add" onclick="agregarEjercicio()">+ Agregar</button>
+    </div>
+
+    <!-- Cardio / HIIT block -->
+    <div class="section-toggle" onclick="toggleCardioBlock(this)">
+      <span class="section-toggle-icon">▶</span>
+      <span class="section-toggle-label">Cardio / HIIT / Intervalo</span>
+    </div>
+    <div class="cardio-block" id="cardio-block">
+      <div class="cardio-tag">Cardio · HIIT · Intervalo</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:120px">
+            <label>Tipo</label>
+            <input type="text" id="crd-grupo" placeholder="Ej: Cardio, HIIT" list="cardio-list">
+            <datalist id="cardio-list">
+              <option value="Cardio"><option value="HIIT"><option value="Intervalo">
+              <option value="Entrada en calor"><option value="Vuelta a la calma">
+            </datalist>
+          </div>
+          <div class="field" style="flex:2;min-width:180px">
+            <label>Actividad</label>
+            <input type="text" id="crd-nombre" placeholder="Ej: Caminata, Salto a la soga, Cinta...">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field">
+            <label>Series</label>
+            <input type="number" id="crd-series" placeholder="0" min="0" style="width:64px">
+          </div>
+          <div class="field">
+            <label>Reps</label>
+            <input type="number" id="crd-reps" placeholder="0" min="0" style="width:64px">
+          </div>
+          <div class="field">
+            <label>Carga kg</label>
+            <input type="number" id="crd-carga" placeholder="0" min="0" step="0.5" style="width:70px">
+          </div>
+          <div class="field">
+            <label>T. Trabajo</label>
+            <input type="text" id="crd-tt" placeholder="Ej: 30s, 1min, 20min" style="width:110px">
+          </div>
+          <div class="field">
+            <label>T. Descanso</label>
+            <input type="text" id="crd-td" placeholder="Ej: 15s, 1min" style="width:110px">
+          </div>
+          <button class="btn-add" onclick="agregarCardio()" style="margin-top:0">+ Agregar</button>
+        </div>
+      </div>
     </div>
 
     <div id="status-add" class="status-msg"></div>
@@ -444,6 +501,68 @@ function volverAlPlanificador() {
   window.location.href = 'training-cards.html';
 }
 
+// ── TOGGLE CARDIO BLOCK ───────────────────────────────────────────────
+function toggleCardioBlock(el) {
+  el.classList.toggle('open');
+  document.getElementById('cardio-block').classList.toggle('open');
+}
+
+// ── AGREGAR CARDIO ────────────────────────────────────────────────────
+async function agregarCardio() {
+  const grupo  = document.getElementById('crd-grupo').value.trim() || 'Cardio';
+  const nombre = document.getElementById('crd-nombre').value.trim();
+  const series = document.getElementById('crd-series').value !== '' ? parseInt(document.getElementById('crd-series').value) : null;
+  const reps   = document.getElementById('crd-reps').value   !== '' ? parseInt(document.getElementById('crd-reps').value)   : null;
+  const carga  = document.getElementById('crd-carga').value  !== '' ? parseFloat(document.getElementById('crd-carga').value) : null;
+  const tt     = document.getElementById('crd-tt').value.trim();
+  const td     = document.getElementById('crd-td').value.trim();
+  const status = document.getElementById('status-add');
+
+  if (!nombre) {
+    showStatus(status, 'error', 'Ingresá la actividad.');
+    return;
+  }
+
+  showStatus(status, 'loading', 'Guardando...');
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        sesion_id:       parseInt(sesionId),
+        alumno_id:       parseInt(alumnoId),
+        grupo_muscular:  grupo,
+        ejercicio:       nombre,
+        series:          series !== null ? series : 0,
+        reps:            reps   !== null ? reps   : 0,
+        carga:           carga  !== null ? carga  : 0,
+        tiempo_trabajo:  tt || null,
+        tiempo_descanso: td || null,
+        orden:           ejercicios.length + 1
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    ejercicios.push(data[0]);
+    renderList();
+
+    document.getElementById('crd-nombre').value = '';
+    document.getElementById('crd-series').value = '';
+    document.getElementById('crd-reps').value   = '';
+    document.getElementById('crd-carga').value  = '';
+    document.getElementById('crd-tt').value     = '';
+    document.getElementById('crd-td').value     = '';
+    document.getElementById('crd-nombre').focus();
+
+    showStatus(status, 'success', `✓ ${nombre} agregado.`);
+    setTimeout(() => status.style.display = 'none', 2500);
+
+  } catch(e) {
+    showStatus(status, 'error', 'Error: ' + e.message);
+  }
+}
+
 // ── AGREGAR ───────────────────────────────────────────────────────────
 async function agregarEjercicio() {
   const grupo  = document.getElementById('ej-grupo').value.trim();
@@ -455,8 +574,8 @@ async function agregarEjercicio() {
   const td     = document.getElementById('ej-td').value.trim();
   const status = document.getElementById('status-add');
 
-  if (!grupo || !nombre || !series) {
-    showStatus(status, 'error', 'Completá grupo, ejercicio y series.');
+  if (!grupo || !nombre) {
+    showStatus(status, 'error', 'Completá grupo y ejercicio.');
     return;
   }
 
