@@ -146,6 +146,13 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
           <input type="number" id="ej-carga"  placeholder="Kg"  min="0" step="0.5">
         </div>
       </div>
+      <div class="field">
+        <label>T. Trabajo / T. Descanso</label>
+        <div class="nums-row">
+          <input type="text" id="ej-tt" placeholder="Ej: 40s" style="width:80px">
+          <input type="text" id="ej-td" placeholder="Ej: 60s" style="width:80px">
+        </div>
+      </div>
       <button class="btn-add" onclick="agregarEjercicio()">+ Agregar</button>
     </div>
 
@@ -444,6 +451,8 @@ async function agregarEjercicio() {
   const series = parseInt(document.getElementById('ej-series').value) || 0;
   const reps   = parseInt(document.getElementById('ej-reps').value)   || 0;
   const carga  = parseFloat(document.getElementById('ej-carga').value) || 0;
+  const tt     = document.getElementById('ej-tt').value.trim();
+  const td     = document.getElementById('ej-td').value.trim();
   const status = document.getElementById('status-add');
 
   if (!grupo || !nombre || !series) {
@@ -463,6 +472,8 @@ async function agregarEjercicio() {
         grupo_muscular: grupo,
         ejercicio: nombre,
         series, reps, carga,
+        tiempo_trabajo: tt || null,
+        tiempo_descanso: td || null,
         orden: ejercicios.length + 1
       })
     });
@@ -476,6 +487,8 @@ async function agregarEjercicio() {
     document.getElementById('ej-series').value = '';
     document.getElementById('ej-reps').value   = '';
     document.getElementById('ej-carga').value  = '';
+    document.getElementById('ej-tt').value     = '';
+    document.getElementById('ej-td').value     = '';
     document.getElementById('ej-grupo').focus();
 
     showStatus(status, 'success', `✓ ${nombre} agregado.`);
