@@ -1126,6 +1126,10 @@ function renderPlanner() {
                   style="width:20px;height:20px;border-radius:4px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;flex-shrink:0"
                   onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
                   onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
+                ${hasData ? `<div title="Copiar día" onclick="event.stopPropagation();abrirCopyDiaModal(${sem},${d})"
+                  style="width:20px;height:20px;border-radius:4px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;flex-shrink:0"
+                  onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
+                  onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">⧉</div>` : ''}
                 <div title="Borrar día" onclick="event.stopPropagation();borrarDia(${sem},${d})"
                   style="width:20px;height:20px;border-radius:4px;background:#fff0f0;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;font-weight:700;color:#e05555;transition:all .15s;flex-shrink:0"
                   onmouseover="this.style.background='#fecaca'"
@@ -1196,6 +1200,136 @@ function editarDia(sem, dia) {
   window.location.href = `editar-alumno.html?alumno_id=${alumnoId}&sesion_id=${sesionId}`;
 }
 
+
+// ── COPY DAY ──────────────────────────────────────────────────────────────
+let copyDiaSrcSem = null;
+let copyDiaSrcDia = null;
+let copyDiaSelected = new Set();
+
+function abrirCopyDiaModal(sem, dia) {
+  if (!selAlumno || !DB[selAlumno]) return;
+  copyDiaSrcSem = parseInt(sem);
+  copyDiaSrcDia = parseInt(dia);
+  copyDiaSelected = new Set();
+
+  document.getElementById('copy-dia-modal-src').textContent = `S${sem} · D${dia}`;
+  document.getElementById('copy-dia-modal-warn').style.display = 'none';
+  document.getElementById('copy-dia-modal-confirm').disabled = true;
+
+  const sems = getSemanas(selAlumno);
+  const grid = document.getElementById('copy-dia-modal-semanas');
+  grid.innerHTML = sems.map(s => {
+    const hasThisDay = (DB[selAlumno].rows||[]).some(r => r.s===s && r.d===copyDiaSrcDia);
+    const isSrc = s === copyDiaSrcSem;
+    return `<button onclick="toggleCopyDiaSem(${s})" id="cdm-${s}"
+      style="padding:8px 14px;border-radius:8px;border:1.5px solid ${isSrc?'#c4bdb5':'#e8e4de'};
+      background:${isSrc?'#f0ede8':'#fff'};color:${isSrc?'#c4bdb5':'#1a1714'};
+      font-size:12px;font-weight:700;cursor:${isSrc?'not-allowed':'pointer'};font-family:inherit"
+      ${isSrc?'disabled':''}>
+      S${s}${hasThisDay?' ·':''}
+    </button>`;
+  }).join('');
+
+  document.getElementById('copy-dia-modal').style.display = 'flex';
+}
+
+function toggleCopyDiaSem(s) {
+  if (s === copyDiaSrcSem) return;
+  if (copyDiaSelected.has(s)) {
+    copyDiaSelected.delete(s);
+    document.getElementById('cdm-' + s).style.background = '#fff';
+    document.getElementById('cdm-' + s).style.borderColor = '#e8e4de';
+    document.getElementById('cdm-' + s).style.color = '#1a1714';
+  } else {
+    copyDiaSelected.add(s);
+    document.getElementById('cdm-' + s).style.background = '#c8a45a';
+    document.getElementById('cdm-' + s).style.borderColor = '#c8a45a';
+    document.getElementById('cdm-' + s).style.color = '#fff';
+  }
+  const hasOverwrite = [...copyDiaSelected].some(s =>
+    (DB[selAlumno].rows||[]).some(r => r.s===s && r.d===copyDiaSrcDia)
+  );
+  document.getElementById('copy-dia-modal-warn').style.display = hasOverwrite ? 'block' : 'none';
+  document.getElementById('copy-dia-modal-confirm').disabled = copyDiaSelected.size === 0;
+}
+
+function closeCopyDiaModal() {
+  document.getElementById('copy-dia-modal').style.display = 'none';
+  copyDiaSelected = new Set();
+}
+
+async function confirmarCopiaDia() {
+  if (!copyDiaSrcSem || !copyDiaSrcDia || copyDiaSelected.size === 0) return;
+
+  const btn = document.getElementById('copy-dia-modal-confirm');
+  btn.textContent = 'Copiando...';
+  btn.disabled = true;
+
+  const rows     = DB[selAlumno].rows;
+  const alumnoId = DB[selAlumno].alumno_id;
+  const srcRows  = rows.filter(r => r.s === copyDiaSrcSem && r.d === copyDiaSrcDia).sort((a,b) => a.orden - b.orden);
+
+  try {
+    for (const destSem of copyDiaSelected) {
+      // 1. Get sesion_id for destSem + dia, or create it
+      const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${destSem}&dia=eq.${copyDiaSrcDia}&select=id`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      const existing = await checkRes.json();
+      let destSesionId;
+
+      if (existing.length > 0) {
+        destSesionId = existing[0].id;
+        // Delete existing exercises
+        await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${destSesionId}`, {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
+        });
+      } else {
+        const srcSesion = rows.find(r => r.s === copyDiaSrcSem && r.d === copyDiaSrcDia);
+        const createRes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+          body: JSON.stringify({ alumno_id: alumnoId, semana: destSem, dia: copyDiaSrcDia, mes: Math.ceil(destSem/4) })
+        });
+        const created = await createRes.json();
+        destSesionId = created[0].id;
+      }
+
+      // 2. Insert exercises
+      const toInsert = srcRows.map((r, i) => ({
+        sesion_id:       destSesionId,
+        alumno_id:       alumnoId,
+        grupo_muscular:  r.m,
+        ejercicio:       r.e,
+        series:          r.sr,
+        reps:            r.r,
+        carga:           r.c,
+        tiempo_trabajo:  r.tt || null,
+        tiempo_descanso: r.td || null,
+        orden:           i + 1
+      }));
+
+      await fetch(`${SUPABASE_URL}/rest/v1/ejercicios`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(toInsert)
+      });
+    }
+
+    sessionStorage.setItem('tc_alumno', selAlumno);
+    sessionStorage.setItem('tc_semana', selSemana);
+    sessionStorage.setItem('tc_dia', selDia);
+    sessionStorage.setItem('tc_view', 'planner');
+    await loadFromSupabase();
+    closeCopyDiaModal();
+
+  } catch(e) {
+    btn.textContent = 'Copiar';
+    btn.disabled = false;
+    alert('Error: ' + e.message);
+  }
+}
 
 // ── COPY WEEK ─────────────────────────────────────────────────────────────
 let copySrcSem = null;
@@ -1785,6 +1919,20 @@ loadFromSupabase();
     <div class="modal-actions">
       <button class="modal-btn-cancel" onclick="closeCopyModal()">Cancelar</button>
       <button class="modal-btn-confirm" id="copy-modal-confirm" onclick="confirmarCopia()" disabled>Copiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- COPY DAY MODAL -->
+<div id="copy-dia-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeCopyDiaModal()">
+  <div class="modal-box">
+    <div class="modal-title">Copiar día <span id="copy-dia-modal-src"></span></div>
+    <div class="modal-sub">Seleccioná las semanas destino</div>
+    <div id="copy-dia-modal-warn" class="modal-warn">⚠️ Algunas semanas ya tienen este día. Se sobreescribirán.</div>
+    <div id="copy-dia-modal-semanas" class="modal-semanas"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeCopyDiaModal()">Cancelar</button>
+      <button class="modal-btn-confirm" id="copy-dia-modal-confirm" onclick="confirmarCopiaDia()" disabled>Copiar</button>
     </div>
   </div>
 </div>
