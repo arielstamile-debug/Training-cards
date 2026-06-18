@@ -30,10 +30,10 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .card-title-icon{font-size:18px}
 
 /* Exercise form */
-.ex-row{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:8px;padding:14px;background:#faf8f5;border-radius:10px;margin-bottom:8px;border:1px solid #f0ede8}
+.ex-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;padding:14px;background:#faf8f5;border-radius:10px;margin-bottom:8px;border:1px solid #f0ede8}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
-.field input,.field select{padding:9px 8px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s;min-width:0;box-sizing:border-box}
+.field input,.field select{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s}
 .field input:focus,.field select:focus{border-color:#c8a45a}
 .field input::placeholder{color:#c4bdb5}
 .nums-row{display:flex;gap:5px}
@@ -130,22 +130,24 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
     <div class="card-title"><span class="card-title-icon">➕</span> Agregar ejercicio</div>
 
     <div class="ex-row">
-      <div class="field" style="flex:0 0 120px">
-        <label>Grupo muscular</label>
-        <input type="text" id="ej-grupo" placeholder="Ej: Pecho" list="grupos-list">
-        <datalist id="grupos-list">
-          <option value="Pecho"><option value="Espalda"><option value="Hombros">
-          <option value="Bíceps"><option value="Tríceps"><option value="Piernas">
-          <option value="Glúteos"><option value="Abs"><option value="Core">
-          <option value="Torso Tracción"><option value="Torso Empuje">
-          <option value="Piernas Tracción"><option value="Piernas Empuje">
-        </datalist>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="field">
+          <label>Grupo muscular</label>
+          <input type="text" id="ej-grupo" placeholder="Ej: Pecho" list="grupos-list">
+          <datalist id="grupos-list">
+            <option value="Pecho"><option value="Espalda"><option value="Hombros">
+            <option value="Bíceps"><option value="Tríceps"><option value="Piernas">
+            <option value="Glúteos"><option value="Abs"><option value="Core">
+            <option value="Torso Tracción"><option value="Torso Empuje">
+            <option value="Piernas Tracción"><option value="Piernas Empuje">
+          </datalist>
+        </div>
+        <div class="field">
+          <label>Ejercicio</label>
+          <input type="text" id="ej-nombre" placeholder="Nombre del ejercicio">
+        </div>
       </div>
-      <div class="field" style="flex:1 1 auto;min-width:120px">
-        <label>Ejercicio</label>
-        <input type="text" id="ej-nombre" placeholder="Nombre del ejercicio">
-      </div>
-      <div class="field" style="flex:0 0 auto">
+      <div class="field">
         <label>Ser / Rep / Kg</label>
         <div class="nums-row">
           <input type="number" id="ej-series" placeholder="Ser" min="1" max="10">
@@ -153,11 +155,11 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
           <input type="number" id="ej-carga"  placeholder="Kg"  min="0" step="0.5">
         </div>
       </div>
-      <div class="field" style="flex:0 0 auto">
-        <label>T.Trab / T.Desc</label>
+      <div class="field">
+        <label>T. Trabajo / T. Descanso</label>
         <div class="nums-row">
-          <input type="text" id="ej-tt" placeholder="40s" style="width:50px">
-          <input type="text" id="ej-td" placeholder="60s" style="width:50px">
+          <input type="text" id="ej-tt" placeholder="Ej: 40s" style="width:64px">
+          <input type="text" id="ej-td" placeholder="Ej: 60s" style="width:64px">
         </div>
       </div>
       <button class="btn-add" onclick="agregarEjercicio()">+ Agregar</button>
