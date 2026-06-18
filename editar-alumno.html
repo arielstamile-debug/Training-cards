@@ -30,7 +30,7 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .card-title-icon{font-size:18px}
 
 /* Exercise form */
-.ex-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;padding:14px;background:#faf8f5;border-radius:10px;margin-bottom:8px;border:1px solid #f0ede8}
+.ex-row{display:grid;grid-template-columns:1fr 1.4fr 1.1fr 1fr auto;gap:10px;align-items:end;padding:14px;background:#faf8f5;border-radius:10px;margin-bottom:8px;border:1px solid #f0ede8}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
 .field input,.field select{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s}
@@ -130,22 +130,20 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
     <div class="card-title"><span class="card-title-icon">➕</span> Agregar ejercicio</div>
 
     <div class="ex-row">
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div class="field">
-          <label>Grupo muscular</label>
-          <input type="text" id="ej-grupo" placeholder="Ej: Pecho" list="grupos-list">
-          <datalist id="grupos-list">
-            <option value="Pecho"><option value="Espalda"><option value="Hombros">
-            <option value="Bíceps"><option value="Tríceps"><option value="Piernas">
-            <option value="Glúteos"><option value="Abs"><option value="Core">
-            <option value="Torso Tracción"><option value="Torso Empuje">
-            <option value="Piernas Tracción"><option value="Piernas Empuje">
-          </datalist>
-        </div>
-        <div class="field">
-          <label>Ejercicio</label>
-          <input type="text" id="ej-nombre" placeholder="Nombre del ejercicio">
-        </div>
+      <div class="field">
+        <label>Grupo muscular</label>
+        <input type="text" id="ej-grupo" placeholder="Ej: Pecho" list="grupos-list">
+        <datalist id="grupos-list">
+          <option value="Pecho"><option value="Espalda"><option value="Hombros">
+          <option value="Bíceps"><option value="Tríceps"><option value="Piernas">
+          <option value="Glúteos"><option value="Abs"><option value="Core">
+          <option value="Torso Tracción"><option value="Torso Empuje">
+          <option value="Piernas Tracción"><option value="Piernas Empuje">
+        </datalist>
+      </div>
+      <div class="field">
+        <label>Ejercicio</label>
+        <input type="text" id="ej-nombre" placeholder="Nombre del ejercicio">
       </div>
       <div class="field">
         <label>Ser / Rep / Kg</label>
