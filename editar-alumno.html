@@ -31,13 +31,14 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 
 /* Exercise form */
 .ex-row{display:flex;flex-direction:column;gap:10px;padding:14px;background:#faf8f5;border-radius:10px;margin-bottom:8px;border:1px solid #f0ede8}
-.ex-row-top{display:flex;gap:8px}
+.ex-row-top{display:flex;gap:8px;align-items:flex-end}
 .ex-row-bottom{display:flex;gap:6px;align-items:center}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
 .field input,.field select{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s}
 .field input:focus,.field select:focus{border-color:#c8a45a}
 .field input::placeholder{color:#c4bdb5}
+.ex-row-top .field input{padding:9px 10px;font-size:13px}
 .nums-row{display:flex;gap:5px}
 .nums-row input{min-width:0;width:52px;padding:10px 4px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;transition:border .15s}
 .nums-row input:focus{border-color:#c8a45a}
