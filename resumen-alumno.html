@@ -213,11 +213,25 @@ async function loadResumenData() {
   }
 }
 
-function calcVolumen(ex) {
+function calcTonelaje(ex) {
   const s = Number(ex.series) || 0;
   const r = Number(ex.reps) || 0;
   const k = Number(ex.carga) || 0;
   return s * r * k;
+}
+
+function calcVolumen(ex) {
+  const s = Number(ex.series) || 0;
+  const r = Number(ex.reps) || 0;
+  return s * r;
+}
+
+// 1RM estimado — fórmula de Epley: peso × (1 + reps/30)
+function calc1RM(ex) {
+  const k = Number(ex.carga) || 0;
+  const r = Number(ex.reps) || 0;
+  if (!k || !r) return 0;
+  return k * (1 + r / 30);
 }
 
 function renderResumenCharts() {
@@ -241,9 +255,10 @@ function renderResumenCharts() {
   datos.forEach(ex => {
     const sem = ex.sesiones?.semana;
     if (sem === undefined || sem === null) return;
-    if (!porSemana[sem]) porSemana[sem] = { volumen: 0, series: 0 };
-    porSemana[sem].volumen += calcVolumen(ex);
-    porSemana[sem].series  += Number(ex.series) || 0;
+    if (!porSemana[sem]) porSemana[sem] = { volumen: 0, tonelaje: 0, series: 0 };
+    porSemana[sem].volumen  += calcVolumen(ex);
+    porSemana[sem].tonelaje += calcTonelaje(ex);
+    porSemana[sem].series   += Number(ex.series) || 0;
   });
   const semanas = Object.keys(porSemana).map(Number).sort((a,b)=>a-b);
 
@@ -256,14 +271,15 @@ function renderResumenCharts() {
       const g = ex.grupo_muscular || 'Sin grupo';
       if (sem === undefined || sem === null) return;
       if (!porGrupoSemana[g]) porGrupoSemana[g] = {};
-      porGrupoSemana[g][sem] = (porGrupoSemana[g][sem] || 0) + calcVolumen(ex);
+      porGrupoSemana[g][sem] = (porGrupoSemana[g][sem] || 0) + calcTonelaje(ex);
     });
   }
 
+  const tonelajeTotal = datos.reduce((acc, ex) => acc + calcTonelaje(ex), 0);
   const volumenTotal = datos.reduce((acc, ex) => acc + calcVolumen(ex), 0);
   const seriesTotales = datos.reduce((acc, ex) => acc + (Number(ex.series)||0), 0);
   const semanasConDatos = semanas.length;
-  const volumenPromedioSemanal = semanasConDatos ? Math.round(volumenTotal / semanasConDatos) : 0;
+  const tonelajePromedioSemanal = semanasConDatos ? Math.round(tonelajeTotal / semanasConDatos) : 0;
 
   const porMes = {};
   datos.forEach(ex => {
@@ -272,7 +288,7 @@ function renderResumenCharts() {
       const sem = ex.sesiones?.semana;
       mes = sem ? Math.ceil(sem / 4) : 1;
     }
-    porMes[mes] = (porMes[mes] || 0) + calcVolumen(ex);
+    porMes[mes] = (porMes[mes] || 0) + calcTonelaje(ex);
   });
   const mesesOrdenados = Object.keys(porMes).map(Number).sort((a,b)=>a-b);
   const ultimoMes = mesesOrdenados[mesesOrdenados.length - 1];
@@ -286,42 +302,47 @@ function renderResumenCharts() {
   content.innerHTML = `
     <div class="resumen-stats">
       <div class="stat-box">
-        <div class="stat-label">Volumen total</div>
-        <div class="stat-value">${formatNum(volumenTotal)} kg</div>
+        <div class="stat-label">Tonelaje total</div>
+        <div class="stat-value">${formatNum(tonelajeTotal)} kg</div>
         <div class="stat-sub">${tendenciaTxt || '&nbsp;'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Volumen total</div>
+        <div class="stat-value">${formatNum(volumenTotal)} reps</div>
+        <div class="stat-sub">en ${semanasConDatos} semana${semanasConDatos===1?'':'s'}</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Series totales</div>
         <div class="stat-value">${formatNum(seriesTotales)}</div>
-        <div class="stat-sub">en ${semanasConDatos} semana${semanasConDatos===1?'':'s'}</div>
+        <div class="stat-sub">por semana</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Promedio semanal</div>
-        <div class="stat-value">${formatNum(volumenPromedioSemanal)} kg</div>
+        <div class="stat-label">Tonelaje promedio</div>
+        <div class="stat-value">${formatNum(tonelajePromedioSemanal)} kg</div>
         <div class="stat-sub">por semana</div>
       </div>
     </div>
 
     <div class="chart-wrap">
-      <div class="chart-wrap-title">Volumen total por semana ${grupoFiltro ? '— ' + grupoFiltro : ''}</div>
+      <div class="chart-wrap-title">Volumen y tonelaje por semana ${grupoFiltro ? '— ' + grupoFiltro : ''}</div>
       <div class="chart-canvas-box"><canvas id="chart-volumen-semanal"></canvas></div>
     </div>
 
     ${!grupoFiltro ? `
     <div class="chart-wrap">
-      <div class="chart-wrap-title">Volumen por grupo muscular en el tiempo</div>
+      <div class="chart-wrap-title">Tonelaje por grupo muscular en el tiempo</div>
       <div class="chart-canvas-box"><canvas id="chart-volumen-grupos"></canvas></div>
     </div>
 
     <div class="chart-wrap">
-      <div class="chart-wrap-title">Volumen acumulado por grupo muscular</div>
+      <div class="chart-wrap-title">Tonelaje acumulado por grupo muscular</div>
       <table class="gm-table">
-        <thead><tr><th>Grupo muscular</th><th>Volumen total</th><th>% del total</th></tr></thead>
+        <thead><tr><th>Grupo muscular</th><th>Tonelaje total</th><th>% del total</th></tr></thead>
         <tbody>
           ${gruposUnicos.map(g => {
-            const vol = datosSinGrupoFiltro.filter(e => e.grupo_muscular === g).reduce((acc,ex)=>acc+calcVolumen(ex),0);
-            const pct = volumenTotal ? ((vol/volumenTotal)*100).toFixed(1) : '0.0';
-            return `<tr><td>${g}</td><td>${formatNum(vol)} kg</td><td>${pct}%</td></tr>`;
+            const ton = datosSinGrupoFiltro.filter(e => e.grupo_muscular === g).reduce((acc,ex)=>acc+calcTonelaje(ex),0);
+            const pct = tonelajeTotal ? ((ton/tonelajeTotal)*100).toFixed(1) : '0.0';
+            return `<tr><td>${g}</td><td>${formatNum(ton)} kg</td><td>${pct}%</td></tr>`;
           }).join('')}
         </tbody>
       </table>
@@ -333,19 +354,43 @@ function renderResumenCharts() {
     type: 'line',
     data: {
       labels: semanas.map(s => `Sem ${s}`),
-      datasets: [{
-        label: 'Volumen (kg)',
-        data: semanas.map(s => porSemana[s].volumen),
-        borderColor: '#c8a45a',
-        backgroundColor: 'rgba(200,164,90,0.12)',
-        borderWidth: 2.5,
-        pointRadius: 3,
-        pointBackgroundColor: '#c8a45a',
-        tension: 0.3,
-        fill: true
-      }]
+      datasets: [
+        {
+          label: 'Tonelaje (kg)',
+          data: semanas.map(s => porSemana[s].tonelaje),
+          borderColor: '#c8a45a',
+          backgroundColor: 'rgba(200,164,90,0.12)',
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointBackgroundColor: '#c8a45a',
+          tension: 0.3,
+          fill: true,
+          yAxisID: 'yTonelaje'
+        },
+        {
+          label: 'Volumen (reps)',
+          data: semanas.map(s => porSemana[s].volumen),
+          borderColor: '#6b8cae',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5,3],
+          pointRadius: 2.5,
+          pointBackgroundColor: '#6b8cae',
+          tension: 0.3,
+          fill: false,
+          yAxisID: 'yVolumen'
+        }
+      ]
     },
-    options: chartBaseOptions()
+    options: {
+      ...chartBaseOptions(),
+      plugins: { ...chartBaseOptions().plugins, legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, color: '#5a5249' } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#a39b8f' } },
+        yTonelaje: { position: 'left', grid: { color: '#f0ede8' }, ticks: { font: { size: 10 }, color: '#c8a45a' }, beginAtZero: true, title: { display: true, text: 'kg', font: { size: 10 }, color: '#c8a45a' } },
+        yVolumen:  { position: 'right', grid: { display: false }, ticks: { font: { size: 10 }, color: '#6b8cae' }, beginAtZero: true, title: { display: true, text: 'reps', font: { size: 10 }, color: '#6b8cae' } }
+      }
+    }
   });
 
   if (!grupoFiltro) {
@@ -413,14 +458,16 @@ function renderEjercicioCharts() {
   const registros = resumenEjercicios.filter(e => e.ejercicio === nombreEj);
 
   // Agrupar por semana: si hay más de un registro en la misma semana, promediamos
-  const porSemana = {}; // {semana: {series:[], reps:[], carga:[]}}
+  const porSemana = {}; // {semana: {series:[], reps:[], carga:[], rm:[]}}
   registros.forEach(ex => {
     const sem = ex.sesiones?.semana;
     if (sem === undefined || sem === null) return;
-    if (!porSemana[sem]) porSemana[sem] = { series: [], reps: [], carga: [] };
+    if (!porSemana[sem]) porSemana[sem] = { series: [], reps: [], carga: [], rm: [] };
     porSemana[sem].series.push(Number(ex.series) || 0);
     porSemana[sem].reps.push(Number(ex.reps) || 0);
     porSemana[sem].carga.push(Number(ex.carga) || 0);
+    const rm = calc1RM(ex);
+    if (rm > 0) porSemana[sem].rm.push(rm);
   });
 
   const semanas = Object.keys(porSemana).map(Number).sort((a,b)=>a-b);
@@ -444,6 +491,10 @@ function renderEjercicioCharts() {
       <div class="mini-chart-box">
         <div class="mini-chart-title">Carga (kg) por semana</div>
         <div class="mini-chart-canvas-box"><canvas id="chart-ej-carga"></canvas></div>
+      </div>
+      <div class="mini-chart-box">
+        <div class="mini-chart-title">1RM estimado (kg) — fórmula Epley</div>
+        <div class="mini-chart-canvas-box"><canvas id="chart-ej-rm"></canvas></div>
       </div>
     </div>
   `;
@@ -475,6 +526,11 @@ function renderEjercicioCharts() {
   ejercicioCharts.carga = new Chart(document.getElementById('chart-ej-carga').getContext('2d'), {
     type: 'line',
     data: { labels, datasets: [{ data: semanas.map(s => avg(porSemana[s].carga)), borderColor: '#6b8cae', backgroundColor: 'rgba(107,140,174,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#6b8cae', tension: 0.3, fill: true }] },
+    options: miniOptions
+  });
+  ejercicioCharts.rm = new Chart(document.getElementById('chart-ej-rm').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: semanas.map(s => Math.round(avg(porSemana[s].rm))), borderColor: '#b3654a', backgroundColor: 'rgba(179,101,74,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#b3654a', tension: 0.3, fill: true }] },
     options: miniOptions
   });
 }
