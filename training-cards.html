@@ -755,7 +755,10 @@ function renderCard() {
             <div class="card-objetivo" style="color:${t.text2};font-size:11px;font-weight:400">${DB[selAlumno].objetivo||''}</div>
           </div>
         </div>
-        <div class="card-badge" style="background:${t.accent}12;color:${t.accent};font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid ${t.accent}28">Sem ${selSemana} · Día ${selDia}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="card-badge" style="background:${t.accent}12;color:${t.accent};font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid ${t.accent}28">Sem ${selSemana} · Día ${selDia}</div>
+          <a href="resumen-alumno.html?alumno_id=${DB[selAlumno].alumno_id}" style="display:inline-flex;align-items:center;gap:5px;background:${t.accent};color:#fff;font-size:11px;font-weight:700;padding:6px 13px;border-radius:20px;text-decoration:none;white-space:nowrap">📊 Resumen</a>
+        </div>
       </div>
       <table class="ex-table">
         <thead>
