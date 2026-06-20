@@ -49,11 +49,10 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 
 .resumen-empty{color:#a39b8f;font-size:14px;text-align:center;padding:40px 20px}
 
-.mini-chart-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mini-chart-grid{display:grid;grid-template-columns:1fr;gap:14px}
 .mini-chart-box{background:#faf8f5;border:1px solid #f0ede8;border-radius:10px;padding:14px}
 .mini-chart-title{font-size:11px;font-weight:700;color:#5a5249;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px;text-align:center}
-.mini-chart-canvas-box{position:relative;height:150px}
-@media (max-width:680px){.mini-chart-grid{grid-template-columns:1fr}}
+.mini-chart-canvas-box{position:relative;height:200px}
 .skeleton{background:linear-gradient(90deg,#f0ede8 25%,#e8e4de 50%,#f0ede8 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 </style>
@@ -84,8 +83,19 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
   </div>
 
   <div class="card">
-    <div class="card-title"><span class="card-title-icon">📊</span> Resumen trimestral</div>
+    <div class="card-title"><span class="card-title-icon">📊</span> Resumen</div>
     <div class="resumen-filters">
+      <select id="resumen-semanas-filter" onchange="renderResumenCharts()">
+        <option value="4">Primeras 4 semanas</option>
+        <option value="5">Primeras 5 semanas</option>
+        <option value="6">Primeras 6 semanas</option>
+        <option value="7">Primeras 7 semanas</option>
+        <option value="8">Primeras 8 semanas</option>
+        <option value="9">Primeras 9 semanas</option>
+        <option value="10">Primeras 10 semanas</option>
+        <option value="11">Primeras 11 semanas</option>
+        <option value="12" selected>Primeras 12 semanas</option>
+      </select>
       <select id="resumen-grupo-filter" onchange="renderResumenCharts()">
         <option value="">Todos los grupos musculares</option>
       </select>
@@ -212,9 +222,10 @@ function calcVolumen(ex) {
 
 function renderResumenCharts() {
   const grupoFiltro = document.getElementById('resumen-grupo-filter').value;
-  const datos = grupoFiltro
-    ? resumenEjercicios.filter(e => e.grupo_muscular === grupoFiltro)
-    : resumenEjercicios;
+  const maxSemana = Number(document.getElementById('resumen-semanas-filter').value) || 12;
+
+  let datos = resumenEjercicios.filter(e => (e.sesiones?.semana ?? 0) <= maxSemana);
+  if (grupoFiltro) datos = datos.filter(e => e.grupo_muscular === grupoFiltro);
 
   const content = document.getElementById('resumen-content');
 
@@ -237,9 +248,10 @@ function renderResumenCharts() {
   const semanas = Object.keys(porSemana).map(Number).sort((a,b)=>a-b);
 
   const gruposUnicos = [...new Set(resumenEjercicios.map(e => e.grupo_muscular).filter(Boolean))].sort();
+  const datosSinGrupoFiltro = resumenEjercicios.filter(e => (e.sesiones?.semana ?? 0) <= maxSemana);
   const porGrupoSemana = {};
   if (!grupoFiltro) {
-    resumenEjercicios.forEach(ex => {
+    datosSinGrupoFiltro.forEach(ex => {
       const sem = ex.sesiones?.semana;
       const g = ex.grupo_muscular || 'Sin grupo';
       if (sem === undefined || sem === null) return;
@@ -307,7 +319,7 @@ function renderResumenCharts() {
         <thead><tr><th>Grupo muscular</th><th>Volumen total</th><th>% del total</th></tr></thead>
         <tbody>
           ${gruposUnicos.map(g => {
-            const vol = resumenEjercicios.filter(e => e.grupo_muscular === g).reduce((acc,ex)=>acc+calcVolumen(ex),0);
+            const vol = datosSinGrupoFiltro.filter(e => e.grupo_muscular === g).reduce((acc,ex)=>acc+calcVolumen(ex),0);
             const pct = volumenTotal ? ((vol/volumenTotal)*100).toFixed(1) : '0.0';
             return `<tr><td>${g}</td><td>${formatNum(vol)} kg</td><td>${pct}%</td></tr>`;
           }).join('')}
