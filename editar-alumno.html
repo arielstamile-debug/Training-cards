@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:100vh;padding:32px 20px}
@@ -31,14 +32,13 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 
 /* Exercise form */
 .ex-row{display:flex;flex-direction:column;gap:10px;padding:14px;background:#faf8f5;border-radius:10px;margin-bottom:8px;border:1px solid #f0ede8}
-.ex-row-top{display:flex;gap:8px;align-items:flex-end}
+.ex-row-top{display:flex;gap:8px}
 .ex-row-bottom{display:flex;gap:6px;align-items:center}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
 .field input,.field select{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s}
 .field input:focus,.field select:focus{border-color:#c8a45a}
 .field input::placeholder{color:#c4bdb5}
-.ex-row-top .field input{padding:9px 10px;font-size:13px}
 .nums-row{display:flex;gap:5px}
 .nums-row input{min-width:0;width:52px;padding:10px 4px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;transition:border .15s}
 .nums-row input:focus{border-color:#c8a45a}
@@ -102,6 +102,28 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .ex-drag-handle span{display:block;width:16px;height:2px;background:#1a1714;border-radius:1px}
 .ex-item.dragging{opacity:.4;border-style:dashed}
 .ex-item.drag-over{border-color:#c8a45a;background:#fdf8f0}
+
+/* Resumen y progreso */
+.resumen-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.resumen-toggle-icon{font-size:11px;transition:transform .15s;color:#8a8278}
+.resumen-toggle.open .resumen-toggle-icon{transform:rotate(90deg)}
+.resumen-body{display:none;margin-top:18px}
+.resumen-body.open{display:block}
+.resumen-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+.stat-box{background:#faf8f5;border:1px solid #f0ede8;border-radius:10px;padding:14px}
+.stat-box .stat-label{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#8a8278;margin-bottom:6px}
+.stat-box .stat-value{font-size:20px;font-weight:800;color:#1a1714}
+.stat-box .stat-sub{font-size:11px;color:#a39b8f;margin-top:2px}
+.chart-wrap{background:#faf8f5;border:1px solid #f0ede8;border-radius:10px;padding:16px;margin-bottom:14px}
+.chart-wrap-title{font-size:12px;font-weight:700;color:#5a5249;margin-bottom:10px;text-transform:uppercase;letter-spacing:.3px}
+.chart-canvas-box{position:relative;height:220px}
+.resumen-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.resumen-filters select{padding:7px 10px;border:1.5px solid #e8e4de;border-radius:8px;font-size:12px;font-family:inherit;background:#fff;outline:none;color:#1a1714}
+.gm-table{width:100%;border-collapse:collapse;font-size:12px}
+.gm-table th{text-align:left;color:#8a8278;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.3px;padding:6px 8px;border-bottom:1.5px solid #e8e4de}
+.gm-table td{padding:8px;border-bottom:1px solid #f0ede8;color:#1a1714}
+.gm-table tr:last-child td{border-bottom:none}
+.resumen-empty{color:#a39b8f;font-size:13px;text-align:center;padding:20px}
 </style>
 </head>
 <body>
@@ -220,6 +242,23 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
       <div class="skeleton" style="height:58px;border-radius:10px"></div>
     </div>
     <div id="status-list" class="status-msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="resumen-toggle" id="resumen-toggle" onclick="toggleResumen()">
+      <span class="resumen-toggle-icon">▶</span>
+      <span class="card-title" style="margin-bottom:0"><span class="card-title-icon">📊</span> Resumen y progreso</span>
+    </div>
+    <div class="resumen-body" id="resumen-body">
+      <div class="resumen-filters">
+        <select id="resumen-grupo-filter" onchange="renderResumenCharts()">
+          <option value="">Todos los grupos musculares</option>
+        </select>
+      </div>
+      <div id="resumen-content">
+        <div class="resumen-empty">Cargando datos de progreso...</div>
+      </div>
+    </div>
   </div>
 
   <button class="btn-done" onclick="volverAlPlanificador()">
@@ -655,6 +694,237 @@ function showError(msg) {
       <div style="font-size:13px;margin-bottom:24px">${msg}</div>
       <a href="training-cards.html" style="color:#c8a45a;font-weight:600;font-size:13px">← Volver al planificador</a>
     </div>`;
+}
+
+// ── RESUMEN Y PROGRESO ───────────────────────────────────────────────
+let resumenLoaded = false;
+let resumenEjercicios = [];   // todos los ejercicios del alumno, con su sesión
+let resumenCharts = {};       // instancias de Chart.js activas, para destruir antes de redibujar
+
+const CHART_COLORS = ['#c8a45a','#7a9e7e','#b3654a','#6b8cae','#a36b9e','#c2944a','#5e9e9e','#9e7a5e','#8a8e6b','#b35e8c'];
+
+function toggleResumen() {
+  const toggle = document.getElementById('resumen-toggle');
+  const body   = document.getElementById('resumen-body');
+  const isOpen = body.classList.toggle('open');
+  toggle.classList.toggle('open', isOpen);
+  if (isOpen && !resumenLoaded) {
+    loadResumenData();
+  }
+}
+
+async function loadResumenData() {
+  resumenLoaded = true;
+  const content = document.getElementById('resumen-content');
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/ejercicios?alumno_id=eq.${alumnoId}&select=grupo_muscular,series,reps,carga,sesiones(semana,dia,mes,fecha)&order=sesiones(semana),sesiones(dia)`,
+      { headers }
+    );
+    if (!res.ok) throw new Error(await res.text());
+    resumenEjercicios = await res.json();
+
+    if (!resumenEjercicios.length) {
+      content.innerHTML = '<div class="resumen-empty">Todavía no hay ejercicios cargados para graficar progreso.</div>';
+      return;
+    }
+
+    // Poblar filtro de grupos musculares
+    const grupos = [...new Set(resumenEjercicios.map(e => e.grupo_muscular).filter(Boolean))].sort();
+    const filterEl = document.getElementById('resumen-grupo-filter');
+    filterEl.innerHTML = '<option value="">Todos los grupos musculares</option>' +
+      grupos.map(g => `<option value="${g}">${g}</option>`).join('');
+
+    renderResumenCharts();
+  } catch(e) {
+    content.innerHTML = `<div class="resumen-empty">Error al cargar el resumen: ${e.message}</div>`;
+  }
+}
+
+// Calcula volumen = series * reps * carga, devuelve 0 si falta algún dato
+function calcVolumen(ex) {
+  const s = Number(ex.series) || 0;
+  const r = Number(ex.reps) || 0;
+  const k = Number(ex.carga) || 0;
+  return s * r * k;
+}
+
+function renderResumenCharts() {
+  const grupoFiltro = document.getElementById('resumen-grupo-filter').value;
+  const datos = grupoFiltro
+    ? resumenEjercicios.filter(e => e.grupo_muscular === grupoFiltro)
+    : resumenEjercicios;
+
+  if (!datos.length) {
+    document.getElementById('resumen-content').innerHTML = '<div class="resumen-empty">Sin datos para este filtro.</div>';
+    return;
+  }
+
+  // Destruir charts previos
+  Object.values(resumenCharts).forEach(c => c.destroy());
+  resumenCharts = {};
+
+  // ── Agrupar por semana ──
+  const porSemana = {}; // {semana: {volumen, series}}
+  datos.forEach(ex => {
+    const sem = ex.sesiones?.semana;
+    if (sem === undefined || sem === null) return;
+    if (!porSemana[sem]) porSemana[sem] = { volumen: 0, series: 0 };
+    porSemana[sem].volumen += calcVolumen(ex);
+    porSemana[sem].series  += Number(ex.series) || 0;
+  });
+  const semanas = Object.keys(porSemana).map(Number).sort((a,b)=>a-b);
+
+  // ── Agrupar por grupo muscular y semana (para multi-línea, solo si no hay filtro) ──
+  const gruposUnicos = [...new Set(resumenEjercicios.map(e => e.grupo_muscular).filter(Boolean))].sort();
+  const porGrupoSemana = {}; // {grupo: {semana: volumen}}
+  if (!grupoFiltro) {
+    resumenEjercicios.forEach(ex => {
+      const sem = ex.sesiones?.semana;
+      const g = ex.grupo_muscular || 'Sin grupo';
+      if (sem === undefined || sem === null) return;
+      if (!porGrupoSemana[g]) porGrupoSemana[g] = {};
+      porGrupoSemana[g][sem] = (porGrupoSemana[g][sem] || 0) + calcVolumen(ex);
+    });
+  }
+
+  // ── Stats generales ──
+  const volumenTotal = datos.reduce((acc, ex) => acc + calcVolumen(ex), 0);
+  const seriesTotales = datos.reduce((acc, ex) => acc + (Number(ex.series)||0), 0);
+  const semanasConDatos = semanas.length;
+  const volumenPromedioSemanal = semanasConDatos ? Math.round(volumenTotal / semanasConDatos) : 0;
+
+  // Volumen del mes actual vs mes anterior (basado en campo "mes" de sesiones si existe, sino agrupamos cada 4 semanas)
+  const porMes = {};
+  datos.forEach(ex => {
+    let mes = ex.sesiones?.mes;
+    if (mes === undefined || mes === null) {
+      const sem = ex.sesiones?.semana;
+      mes = sem ? Math.ceil(sem / 4) : 1;
+    }
+    porMes[mes] = (porMes[mes] || 0) + calcVolumen(ex);
+  });
+  const mesesOrdenados = Object.keys(porMes).map(Number).sort((a,b)=>a-b);
+  const ultimoMes = mesesOrdenados[mesesOrdenados.length - 1];
+  const penultimoMes = mesesOrdenados[mesesOrdenados.length - 2];
+  let tendenciaTxt = '';
+  if (ultimoMes !== undefined && penultimoMes !== undefined && porMes[penultimoMes] > 0) {
+    const delta = ((porMes[ultimoMes] - porMes[penultimoMes]) / porMes[penultimoMes]) * 100;
+    tendenciaTxt = `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}% vs mes anterior`;
+  }
+
+  document.getElementById('resumen-content').innerHTML = `
+    <div class="resumen-stats">
+      <div class="stat-box">
+        <div class="stat-label">Volumen total</div>
+        <div class="stat-value">${formatNum(volumenTotal)} kg</div>
+        <div class="stat-sub">${tendenciaTxt || '&nbsp;'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Series totales</div>
+        <div class="stat-value">${formatNum(seriesTotales)}</div>
+        <div class="stat-sub">en ${semanasConDatos} semana${semanasConDatos===1?'':'s'}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Promedio semanal</div>
+        <div class="stat-value">${formatNum(volumenPromedioSemanal)} kg</div>
+        <div class="stat-sub">por semana</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-wrap-title">Volumen total por semana ${grupoFiltro ? '— ' + grupoFiltro : ''}</div>
+      <div class="chart-canvas-box"><canvas id="chart-volumen-semanal"></canvas></div>
+    </div>
+
+    ${!grupoFiltro ? `
+    <div class="chart-wrap">
+      <div class="chart-wrap-title">Volumen por grupo muscular en el tiempo</div>
+      <div class="chart-canvas-box"><canvas id="chart-volumen-grupos"></canvas></div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-wrap-title">Volumen acumulado por grupo muscular</div>
+      <table class="gm-table">
+        <thead><tr><th>Grupo muscular</th><th>Volumen total</th><th>% del total</th></tr></thead>
+        <tbody>
+          ${gruposUnicos.map(g => {
+            const vol = resumenEjercicios.filter(e => e.grupo_muscular === g).reduce((acc,ex)=>acc+calcVolumen(ex),0);
+            const pct = volumenTotal ? ((vol/volumenTotal)*100).toFixed(1) : '0.0';
+            return `<tr><td>${g}</td><td>${formatNum(vol)} kg</td><td>${pct}%</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+  `;
+
+  // ── Chart 1: Volumen semanal (línea simple) ──
+  const ctxSem = document.getElementById('chart-volumen-semanal').getContext('2d');
+  resumenCharts.semanal = new Chart(ctxSem, {
+    type: 'line',
+    data: {
+      labels: semanas.map(s => `Sem ${s}`),
+      datasets: [{
+        label: 'Volumen (kg)',
+        data: semanas.map(s => porSemana[s].volumen),
+        borderColor: '#c8a45a',
+        backgroundColor: 'rgba(200,164,90,0.12)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointBackgroundColor: '#c8a45a',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: chartBaseOptions()
+  });
+
+  // ── Chart 2: multi-línea por grupo muscular (solo si no hay filtro) ──
+  if (!grupoFiltro) {
+    const ctxGrupos = document.getElementById('chart-volumen-grupos').getContext('2d');
+    resumenCharts.grupos = new Chart(ctxGrupos, {
+      type: 'line',
+      data: {
+        labels: semanas.map(s => `Sem ${s}`),
+        datasets: gruposUnicos.map((g, i) => ({
+          label: g,
+          data: semanas.map(s => (porGrupoSemana[g] && porGrupoSemana[g][s]) || 0),
+          borderColor: CHART_COLORS[i % CHART_COLORS.length],
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 2.5,
+          pointBackgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+          tension: 0.3
+        }))
+      },
+      options: { ...chartBaseOptions(), plugins: { ...chartBaseOptions().plugins, legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, color: '#5a5249' } } } }
+    });
+  }
+}
+
+function chartBaseOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1a1714',
+        titleFont: { size: 11, family: 'Inter' },
+        bodyFont: { size: 11, family: 'Inter' },
+        padding: 10,
+        cornerRadius: 8
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#a39b8f' } },
+      y: { grid: { color: '#f0ede8' }, ticks: { font: { size: 10 }, color: '#a39b8f' }, beginAtZero: true }
+    }
+  };
+}
+
+function formatNum(n) {
+  return Math.round(n).toLocaleString('es-AR');
 }
 
 init();
