@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:100vh;padding:32px 20px}
@@ -48,6 +48,12 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .gm-table tr:last-child td{border-bottom:none}
 
 .resumen-empty{color:#a39b8f;font-size:14px;text-align:center;padding:40px 20px}
+
+.mini-chart-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mini-chart-box{background:#faf8f5;border:1px solid #f0ede8;border-radius:10px;padding:14px}
+.mini-chart-title{font-size:11px;font-weight:700;color:#5a5249;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px;text-align:center}
+.mini-chart-canvas-box{position:relative;height:150px}
+@media (max-width:680px){.mini-chart-grid{grid-template-columns:1fr}}
 .skeleton{background:linear-gradient(90deg,#f0ede8 25%,#e8e4de 50%,#f0ede8 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 </style>
@@ -86,6 +92,18 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
     </div>
     <div id="resumen-content">
       <div class="resumen-empty">Cargando datos de progreso...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">📈</span> Progresión por ejercicio</div>
+    <div class="resumen-filters">
+      <select id="ejercicio-filter" onchange="renderEjercicioCharts()">
+        <option value="">Elegí un ejercicio...</option>
+      </select>
+    </div>
+    <div id="ejercicio-content">
+      <div class="resumen-empty">Elegí un ejercicio arriba para ver su progresión semana a semana.</div>
     </div>
   </div>
 
@@ -153,11 +171,16 @@ async function loadResumenData() {
   const content = document.getElementById('resumen-content');
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/ejercicios?alumno_id=eq.${alumnoId}&select=grupo_muscular,series,reps,carga,sesiones(semana,dia,mes,fecha)&order=sesiones(semana),sesiones(dia)`,
+      `${SUPABASE_URL}/rest/v1/ejercicios?alumno_id=eq.${alumnoId}&select=grupo_muscular,ejercicio,series,reps,carga,sesiones(semana,dia,mes,fecha)`,
       { headers }
     );
     if (!res.ok) throw new Error(await res.text());
     resumenEjercicios = await res.json();
+    resumenEjercicios.sort((a,b) => {
+      const sa = a.sesiones?.semana ?? 0, sb = b.sesiones?.semana ?? 0;
+      if (sa !== sb) return sa - sb;
+      return (a.sesiones?.dia ?? 0) - (b.sesiones?.dia ?? 0);
+    });
 
     if (!resumenEjercicios.length) {
       content.innerHTML = '<div class="resumen-empty">Todavía no hay ejercicios cargados para este alumno.</div>';
@@ -168,6 +191,11 @@ async function loadResumenData() {
     const filterEl = document.getElementById('resumen-grupo-filter');
     filterEl.innerHTML = '<option value="">Todos los grupos musculares</option>' +
       grupos.map(g => `<option value="${g}">${g}</option>`).join('');
+
+    const ejerciciosUnicos = [...new Set(resumenEjercicios.map(e => e.ejercicio).filter(Boolean))].sort();
+    const ejFilterEl = document.getElementById('ejercicio-filter');
+    ejFilterEl.innerHTML = '<option value="">Elegí un ejercicio...</option>' +
+      ejerciciosUnicos.map(e => `<option value="${e}">${e}</option>`).join('');
 
     renderResumenCharts();
   } catch(e) {
@@ -353,6 +381,90 @@ function chartBaseOptions() {
 
 function formatNum(n) {
   return Math.round(n).toLocaleString('es-AR');
+}
+
+// ── PROGRESIÓN POR EJERCICIO ─────────────────────────────────────────
+let ejercicioCharts = {};
+
+function renderEjercicioCharts() {
+  const nombreEj = document.getElementById('ejercicio-filter').value;
+  const content = document.getElementById('ejercicio-content');
+
+  Object.values(ejercicioCharts).forEach(c => c.destroy());
+  ejercicioCharts = {};
+
+  if (!nombreEj) {
+    content.innerHTML = '<div class="resumen-empty">Elegí un ejercicio arriba para ver su progresión semana a semana.</div>';
+    return;
+  }
+
+  const registros = resumenEjercicios.filter(e => e.ejercicio === nombreEj);
+
+  // Agrupar por semana: si hay más de un registro en la misma semana, promediamos
+  const porSemana = {}; // {semana: {series:[], reps:[], carga:[]}}
+  registros.forEach(ex => {
+    const sem = ex.sesiones?.semana;
+    if (sem === undefined || sem === null) return;
+    if (!porSemana[sem]) porSemana[sem] = { series: [], reps: [], carga: [] };
+    porSemana[sem].series.push(Number(ex.series) || 0);
+    porSemana[sem].reps.push(Number(ex.reps) || 0);
+    porSemana[sem].carga.push(Number(ex.carga) || 0);
+  });
+
+  const semanas = Object.keys(porSemana).map(Number).sort((a,b)=>a-b);
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : 0;
+
+  if (!semanas.length) {
+    content.innerHTML = '<div class="resumen-empty">Sin datos suficientes para este ejercicio.</div>';
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="mini-chart-grid">
+      <div class="mini-chart-box">
+        <div class="mini-chart-title">Series por semana</div>
+        <div class="mini-chart-canvas-box"><canvas id="chart-ej-series"></canvas></div>
+      </div>
+      <div class="mini-chart-box">
+        <div class="mini-chart-title">Reps por semana</div>
+        <div class="mini-chart-canvas-box"><canvas id="chart-ej-reps"></canvas></div>
+      </div>
+      <div class="mini-chart-box">
+        <div class="mini-chart-title">Carga (kg) por semana</div>
+        <div class="mini-chart-canvas-box"><canvas id="chart-ej-carga"></canvas></div>
+      </div>
+    </div>
+  `;
+
+  const labels = semanas.map(s => `S${s}`);
+  const miniOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#1a1714', padding: 8, cornerRadius: 6, titleFont:{size:10}, bodyFont:{size:10} }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#a39b8f' } },
+      y: { grid: { color: '#f0ede8' }, ticks: { font: { size: 9 }, color: '#a39b8f' }, beginAtZero: true }
+    }
+  };
+
+  ejercicioCharts.series = new Chart(document.getElementById('chart-ej-series').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: semanas.map(s => avg(porSemana[s].series)), borderColor: '#c8a45a', backgroundColor: 'rgba(200,164,90,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#c8a45a', tension: 0.3, fill: true }] },
+    options: miniOptions
+  });
+  ejercicioCharts.reps = new Chart(document.getElementById('chart-ej-reps').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: semanas.map(s => avg(porSemana[s].reps)), borderColor: '#7a9e7e', backgroundColor: 'rgba(122,158,126,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#7a9e7e', tension: 0.3, fill: true }] },
+    options: miniOptions
+  });
+  ejercicioCharts.carga = new Chart(document.getElementById('chart-ej-carga').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: semanas.map(s => avg(porSemana[s].carga)), borderColor: '#6b8cae', backgroundColor: 'rgba(107,140,174,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#6b8cae', tension: 0.3, fill: true }] },
+    options: miniOptions
+  });
 }
 
 init();
