@@ -432,7 +432,7 @@ async function loadFromSupabase() {
         mes:       parseInt(sesion.mes)   || 1,
         sesion_id: row.sesion_id || sesion.id,
         m:   String(row.grupo_muscular || '').trim().toUpperCase(),
-        e:   String(row.ejercicio || '').trim().replace(/_/g,' '),
+        e:   String(row.ejercicio || '').trim().replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
         sr:  parseFloat(row.series) || 0,
         r:   parseFloat(row.reps)   || 0,
         c:   parseFloat(row.carga)  || 0,
@@ -582,7 +582,7 @@ function handleFile(file) {
           .map(n => ({
             s: parseInt(n['SEMANA'])||0, d: parseInt(n['DIA'])||0,
             m: String(n['MUSCULO']||'').trim().toUpperCase(),
-            e: String(n['EJERCICIO']||'').trim().replace(/_/g,' '),
+            e: String(n['EJERCICIO']||'').trim().replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
             sr: parseFloat(n['SERIES']||0)||0,
             r: parseFloat(n['REPS']||0)||0,
             c: parseFloat(n['CARGA']||0)||0,
