@@ -186,6 +186,18 @@ async function loadResumenData() {
     );
     if (!res.ok) throw new Error(await res.text());
     resumenEjercicios = await res.json();
+
+    // Normalizar nombres: trim + capitalize (evita duplicados por mayúsculas/tildes/espacios)
+    function normalizarNombre(str) {
+      return String(str || '').trim().replace(/_/g, ' ')
+        .toLowerCase().replace(/\w/g, c => c.toUpperCase());
+    }
+    resumenEjercicios = resumenEjercicios.map(e => ({
+      ...e,
+      ejercicio:      normalizarNombre(e.ejercicio),
+      grupo_muscular: normalizarNombre(e.grupo_muscular)
+    }));
+
     resumenEjercicios.sort((a,b) => {
       const sa = a.sesiones?.semana ?? 0, sb = b.sesiones?.semana ?? 0;
       if (sa !== sb) return sa - sb;
