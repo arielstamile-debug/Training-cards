@@ -19,11 +19,30 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .page-sub{font-size:13px;color:#8a8278;margin-top:2px}
 .back-link{margin-left:auto;font-size:12px;color:#c8a45a;font-weight:600;text-decoration:none;white-space:nowrap}
 
-.info-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e8e4de;border-radius:12px;padding:14px 18px;margin-bottom:20px}
+.info-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e8e4de;border-radius:12px;padding:14px 18px;margin-bottom:20px;position:relative}
 .info-avatar{width:36px;height:36px;border-radius:50%;background:#c8a45a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
 .info-name{font-size:15px;font-weight:700;color:#1a1714}
 .info-meta{font-size:12px;color:#8a8278;margin-top:2px}
-.info-badge{margin-left:auto;padding:5px 12px;background:#f0ede8;border-radius:20px;font-size:11px;font-weight:700;color:#8a6020;white-space:nowrap}
+.info-badge{margin-left:auto;padding:5px 12px;background:#f0ede8;border-radius:20px;font-size:11px;font-weight:700;color:#8a6020;white-space:nowrap;border:none;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .15s}
+.info-badge:hover{background:#e0d9ce}
+.info-badge .cal-ic{font-size:10px;opacity:.6}
+
+/* Mini calendar popover */
+.cal-popover{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid #e8e4de;border-radius:14px;box-shadow:0 12px 32px rgba(26,23,20,.14);padding:16px;width:268px;z-index:100;display:none}
+.cal-popover.open{display:block}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav{background:#f0ede8;border:none;border-radius:7px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:#8a8278;font-family:inherit;transition:background .15s;padding:0}
+.cal-nav:hover{background:#e0d9ce;color:#1a1714}
+.cal-month-label{font-size:13px;font-weight:700;color:#1a1714;text-transform:capitalize}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{font-size:10px;font-weight:700;color:#c4bdb5;text-align:center;padding-bottom:4px}
+.cal-day{font-size:12px;font-weight:500;color:#1a1714;text-align:center;padding:6px 0;border-radius:7px;cursor:pointer;background:none;border:none;font-family:inherit;transition:all .12s;width:100%}
+.cal-day:hover:not(:disabled){background:#f0ede8}
+.cal-day.muted{color:#d0cac0}
+.cal-day.today{color:#c8a45a;font-weight:800}
+.cal-day.selected{background:#1a1714 !important;color:#fff !important;font-weight:700}
+.cal-foot{margin-top:12px;padding-top:10px;border-top:1px solid #f0ede8;font-size:11px;color:#8a8278;line-height:1.6}
+.cal-saving{font-size:11px;color:#c8a45a;font-weight:600;margin-top:6px;text-align:center;min-height:16px}
 
 .card{background:#fff;border:1px solid #e8e4de;border-radius:14px;padding:24px;margin-bottom:20px}
 .card-title{font-size:15px;font-weight:700;color:#1a1714;margin-bottom:18px;display:flex;align-items:center;gap:8px}
@@ -259,7 +278,7 @@ async function init() {
 }
 
 async function loadAlumno() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${alumnoId}&select=nombre,objetivo`, { headers });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${alumnoId}&select=nombre,objetivo,fecha_inicio`, { headers });
   const data = await res.json();
   alumnoData = data[0] || null;
 }
@@ -284,10 +303,25 @@ function renderInfoBar() {
     <div class="info-avatar">${initials}</div>
     <div>
       <div class="info-name">${alumnoData.nombre}</div>
-      <div class="info-meta">${alumnoData.objetivo || ''} · ${sesionData.fecha || ''}</div>
+      <div class="info-meta" id="info-meta-fecha">${alumnoData.objetivo || ''} · ${sesionData.fecha || ''}</div>
     </div>
-    <div class="info-badge">Sem ${sesionData.semana} · Día ${sesionData.dia}</div>
+    <button class="info-badge" onclick="toggleCalendar(event)" id="badge-btn">
+      <span class="cal-ic">📅</span>
+      Sem ${sesionData.semana} · Día ${sesionData.dia}
+    </button>
+    <div class="cal-popover" id="cal-popover">
+      <div class="cal-head">
+        <button class="cal-nav" onclick="calNav(-1)">‹</button>
+        <span class="cal-month-label" id="cal-month-label"></span>
+        <button class="cal-nav" onclick="calNav(1)">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-foot" id="cal-foot"></div>
+      <div class="cal-saving" id="cal-saving"></div>
+    </div>
   `;
+  // close popover when clicking outside
+  document.addEventListener('click', outsideCalendarClick);
 }
 
 let editingId = null;
@@ -655,6 +689,150 @@ function showError(msg) {
       <div style="font-size:13px;margin-bottom:24px">${msg}</div>
       <a href="training-cards.html" style="color:#c8a45a;font-weight:600;font-size:13px">← Volver al planificador</a>
     </div>`;
+}
+
+// ── CALENDAR POPOVER ─────────────────────────────────────────────────
+let calViewDate = new Date(); // month being displayed
+
+function toggleCalendar(e) {
+  e.stopPropagation();
+  const pop = document.getElementById('cal-popover');
+  if (!pop) return;
+  const isOpen = pop.classList.contains('open');
+  if (isOpen) {
+    pop.classList.remove('open');
+    return;
+  }
+  // init view to current session date or today
+  if (sesionData && sesionData.fecha) {
+    calViewDate = new Date(sesionData.fecha + 'T12:00:00');
+  } else {
+    calViewDate = new Date();
+  }
+  renderCalendar();
+  pop.classList.add('open');
+}
+
+function outsideCalendarClick(e) {
+  const pop = document.getElementById('cal-popover');
+  const badge = document.getElementById('badge-btn');
+  if (pop && !pop.contains(e.target) && e.target !== badge && !badge?.contains(e.target)) {
+    pop.classList.remove('open');
+  }
+}
+
+function calNav(dir) {
+  calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth() + dir, 1);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const grid   = document.getElementById('cal-grid');
+  const label  = document.getElementById('cal-month-label');
+  const foot   = document.getElementById('cal-foot');
+  if (!grid || !label) return;
+
+  const year  = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Selected date from sesionData
+  let selectedDate = null;
+  if (sesionData && sesionData.fecha) {
+    selectedDate = new Date(sesionData.fecha + 'T12:00:00');
+    selectedDate.setHours(0,0,0,0);
+  }
+
+  label.textContent = new Date(year, month, 1)
+    .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+
+  // Day-of-week headers (Lu Ma Mi Ju Vi Sa Do)
+  const dows = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  // First cell offset (Monday = 0)
+  const firstDay = new Date(year, month, 1);
+  let offset = firstDay.getDay() - 1; // getDay: 0=Sun
+  if (offset < 0) offset = 6;
+
+  // Fill blanks
+  for (let i = 0; i < offset; i++) html += '<div></div>';
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const thisDate = new Date(year, month, d);
+    thisDate.setHours(0,0,0,0);
+    const isToday    = thisDate.getTime() === today.getTime();
+    const isSelected = selectedDate && thisDate.getTime() === selectedDate.getTime();
+    const cls = ['cal-day', isToday ? 'today' : '', isSelected ? 'selected' : ''].filter(Boolean).join(' ');
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html += `<button class="${cls}" onclick="selectCalDate('${iso}')">${d}</button>`;
+  }
+  grid.innerHTML = html;
+
+  // Footer: show how this date maps to sem/día given fecha_inicio
+  if (alumnoData && alumnoData.fecha_inicio && selectedDate) {
+    const { sem, dia } = calcSemDia(alumnoData.fecha_inicio, selectedDate);
+    foot.innerHTML = `Fecha de inicio del programa: <b>${alumnoData.fecha_inicio}</b><br>
+      Seleccionado → <b>Sem ${sem}, Día ${dia}</b>`;
+  } else {
+    foot.innerHTML = alumnoData && alumnoData.fecha_inicio
+      ? `Fecha de inicio: <b>${alumnoData.fecha_inicio}</b>`
+      : '<span style="color:#e05555">Sin fecha de inicio registrada en el alumno.</span>';
+  }
+}
+
+function calcSemDia(fechaInicio, targetDate) {
+  // fechaInicio: 'YYYY-MM-DD' string; targetDate: Date object (midnight)
+  const start = new Date(fechaInicio + 'T00:00:00');
+  start.setHours(0,0,0,0);
+  const diffMs   = targetDate.getTime() - start.getTime();
+  const diffDays = Math.floor(diffMs / 86400000); // total days since start (0-based)
+  const dayIndex = diffDays < 0 ? 0 : diffDays;  // clamp to 0 if before start
+  const sem = Math.floor(dayIndex / 7) + 1;
+  const dia = (dayIndex % 7) + 1;
+  return { sem, dia };
+}
+
+async function selectCalDate(isoDate) {
+  const saving = document.getElementById('cal-saving');
+  if (!saving) return;
+
+  // Recalculate sem/día
+  let sem = sesionData.semana;
+  let dia = sesionData.dia;
+  if (alumnoData && alumnoData.fecha_inicio) {
+    const target = new Date(isoDate + 'T00:00:00');
+    target.setHours(0,0,0,0);
+    const calc = calcSemDia(alumnoData.fecha_inicio, target);
+    sem = calc.sem;
+    dia = calc.dia;
+  }
+
+  saving.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=eq.${sesionId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ fecha: isoDate, semana: sem, dia: dia })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Update local state
+    sesionData.fecha   = isoDate;
+    sesionData.semana  = sem;
+    sesionData.dia     = dia;
+
+    saving.textContent = '✓ Guardado';
+    setTimeout(() => {
+      document.getElementById('cal-popover')?.classList.remove('open');
+      renderInfoBar(); // re-render badge + meta with new values
+    }, 700);
+
+  } catch(e) {
+    saving.textContent = 'Error: ' + e.message;
+  }
 }
 
 init();
