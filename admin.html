@@ -3,2145 +3,479 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training Cards</title>
+<title>Training Cards — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;min-height:100vh;transition:background .3s}
-.app{display:flex;min-height:100vh}
+body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:100vh;padding:32px 20px}
+.container{max-width:680px;margin:0 auto}
 
-/* ── SIDEBAR (always dark) ── */
-.sidebar{width:272px;flex-shrink:0;background:#1a1a1a;border-right:1px solid #2e2e2e;padding:24px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-dot{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background .3s}
-.brand-dot svg{width:14px;height:14px}
-.brand-name{font-size:14px;font-weight:700;letter-spacing:-.3px;color:#f0f0f0}
-.brand-sub{font-size:10px;color:#666}
-.upload-zone{border:1.5px dashed #2e2e2e;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative}
-.upload-zone:hover{border-color:#c8f135}
-.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.upload-icon{font-size:22px;margin-bottom:6px;opacity:.5}
-.upload-text strong{color:#c8f135;display:block;font-size:12px;margin-bottom:2px}
-.upload-text{font-size:11px;color:#888;line-height:1.5}
-.file-loaded{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#242424;border-radius:8px;border:1px solid #2e2e2e}
-.file-loaded-icon{width:28px;height:28px;background:rgba(200,241,53,.12);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
-.file-loaded-name{font-size:11px;color:#f0f0f0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.file-loaded-sub{font-size:10px;color:#666}
-.file-change{font-size:10px;color:#c8f135;cursor:pointer;margin-left:auto;flex-shrink:0}
-.filter-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#444;margin-bottom:4px}
-.filter-section{display:flex;flex-direction:column;gap:6px}
-.student-list{display:flex;flex-direction:column;gap:3px}
-.student-pill{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s;background:transparent;width:100%;text-align:left}
-.student-pill:hover{background:#242424}
-.pill-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;transition:all .3s}
-.pill-name{font-size:13px;font-weight:600;color:#f0f0f0}
-.pill-obj{font-size:10px;color:#666}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap}
-.filter-btn{padding:7px 12px;background:#242424;border:1px solid #2e2e2e;border-radius:8px;color:#666;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.filter-btn:hover{border-color:#555;color:#f0f0f0}
-.placeholder-text{font-size:12px;color:#444;font-style:italic}
-.export-btn{margin-top:auto;padding:13px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.export-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
-.url-btn{padding:11px;background:transparent;border:1px solid #2e2e2e;border-radius:8px;color:#888;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit}
-.url-btn:hover{border-color:#666;color:#ccc}
-.url-btn:disabled{opacity:.25;cursor:default;pointer-events:none}
-.url-btn svg{width:13px;height:13px}
-.export-btn svg{width:15px;height:15px}
+/* Header */
+.page-header{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.brand-dot{width:28px;height:28px;background:#c8a45a;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-dot svg{width:15px;height:15px}
+.page-title{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.page-sub{font-size:13px;color:#8a8278;margin-top:2px}
+.back-link{margin-left:auto;font-size:12px;color:#c8a45a;font-weight:600;text-decoration:none}
 
-/* ── MAIN ── */
-.main{flex:1;padding:36px;display:flex;flex-direction:column;gap:28px;transition:background .3s}
-.main-title{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.1;transition:color .3s}
-.main-meta{font-size:13px;margin-top:5px;transition:color .3s}
-.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:14px;text-align:center;opacity:.4}
-.welcome-icon{font-size:56px}
-.welcome-title{font-size:16px;font-weight:700}
-.welcome-sub{font-size:13px;max-width:300px;line-height:1.6}
+/* Steps */
+.steps{display:flex;gap:0;margin-bottom:28px}
+.step{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;color:#c4bdb5;cursor:default;transition:all .2s}
+.step.active{background:#fff;color:#1a1714;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.step.done{color:#c8a45a}
+.step-num{width:22px;height:22px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step.active .step-num{background:#c8a45a;color:#fff}
+.step.done .step-num{background:#22c55e;color:#fff}
 
-/* ── CARD ── */
-.card{border-radius:12px;overflow:hidden;max-width:660px;transition:all .3s}
-.card-header-bar{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;transition:background .3s}
-.card-header-left{display:flex;align-items:center;gap:12px}
-.card-avatar-big{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
-.card-alumno{font-size:18px;font-weight:800;letter-spacing:-.4px}
-.card-objetivo{font-size:11px;font-weight:500;margin-top:2px}
-.card-badge{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-.ex-table{width:100%;border-collapse:collapse}
-.ex-table thead tr{}
-.ex-table th{padding:9px 20px;font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:left}
-.ex-table th:not(:first-child){text-align:center}
-.ex-table td{padding:11px 20px;border-bottom-width:1px;border-bottom-style:solid}
-.ex-table tr:last-child td{border-bottom:none}
-.ex-num{width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-right:8px;flex-shrink:0}
-.ex-name-cell{display:flex;align-items:center}
-.ex-name{font-size:13px;font-weight:600}
-.ex-muscle{font-size:10px;margin-top:1px}
-.ex-val{text-align:center;font-size:14px;font-weight:700}
-.card-footer{padding:12px 22px;display:flex;align-items:center;justify-content:space-between;border-top-width:1px;border-top-style:solid}
-.card-footer-text{font-size:11px}
-.card-footer-count{font-size:11px;font-weight:700}
-.empty{padding:48px 32px;text-align:center;font-size:14px}
-.error-msg{background:rgba(220,50,50,.1);border:1px solid rgba(220,50,50,.3);border-radius:8px;padding:12px 14px;font-size:12px;color:#ff8080;line-height:1.5}
+/* Cards */
+.card{background:#fff;border:1px solid #e8e4de;border-radius:14px;padding:24px;margin-bottom:20px}
+.card-title{font-size:15px;font-weight:700;color:#1a1714;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.card-title-icon{font-size:18px}
 
-/* ── PLANNER ── */
-.planner{max-width:800px}
-.planner-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.planner-title{font-size:22px;font-weight:800;letter-spacing:-.5px}
-.planner-meta{font-size:13px;margin-top:4px}
-.month-block{margin-bottom:28px}
-.month-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e8e4de;display:flex;align-items:center;justify-content:space-between}
-.week-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:6px;background:#fff;border:1px solid #e8e4de;cursor:pointer;transition:all .15s}
-.week-row:hover{border-color:#c4bdb5}
-.week-row.active-week{border-color:#c8a45a;background:#fdf8f0}
-.week-label{font-size:13px;font-weight:700;color:#1a1714;width:36px;flex-shrink:0}
-.day-chips{display:flex;gap:6px;flex:1}
-.day-chip{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid transparent}
-.day-chip.has-data{background:#f0ede8;color:#8a6020;border-color:#e8dfc8}
-.day-chip.has-data:hover{background:#e8dfc8}
-.day-chip.no-data{background:#f7f4ef;color:#c4bdb5;border-color:#e8e4de}
-.day-chip.no-data:hover{background:#f0ede8;color:#8a8278}
-.day-chip.selected{background:#c8a45a;color:#fff;border-color:#c8a45a}
-.week-count{font-size:11px;color:#c4bdb5;flex-shrink:0}
-.add-week-btn{width:100%;padding:10px;border:1.5px dashed #e8e4de;border-radius:10px;background:transparent;color:#c4bdb5;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;margin-top:4px}
-.add-week-btn:hover{border-color:#c8a45a;color:#c8a45a}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
+.field input, .field select{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;background:#fff;outline:none;transition:border .15s}
+.field input:focus, .field select:focus{border-color:#c8a45a}
+.field input::placeholder{color:#c4bdb5}
 
-/* ── THEME BADGE on pill ── */
-.theme-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto}
+/* Days selector */
+.days-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.day-btn{padding:7px 12px;border:1.5px solid #e8e4de;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#8a8278;transition:all .15s;font-family:inherit}
+.day-btn.selected{background:#c8a45a;border-color:#c8a45a;color:#fff}
 
-/* ── COPY MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
-.modal-box{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:auto}
-.modal-title{font-size:17px;font-weight:800;color:#1a1714;margin-bottom:4px}
-.modal-sub{font-size:12px;color:#8a8278;margin-bottom:20px}
-.modal-semanas{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;max-height:240px;overflow-y:auto}
-.modal-sem-btn{padding:9px 6px;border:1.5px solid #e8e4de;border-radius:8px;background:#fff;font-size:12px;font-weight:700;color:#1a1714;cursor:pointer;transition:all .15s;font-family:inherit;text-align:center}
-.modal-sem-btn:hover{border-color:#c8a45a;background:#fdf8f0}
-.modal-sem-btn.selected{border-color:#c8a45a;background:#c8a45a;color:#fff}
-.modal-sem-btn.has-data{position:relative}
-.modal-sem-btn.has-data::after{content:'•';position:absolute;top:2px;right:5px;font-size:8px;color:#c8a45a}
-.modal-sem-btn.has-data.selected::after{color:#fff}
-.modal-actions{display:flex;gap:10px}
-.modal-btn-confirm{flex:1;padding:12px;background:#1a1714;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
-.modal-btn-confirm:hover{background:#333}
-.modal-btn-confirm:disabled{opacity:.4;cursor:default}
-.modal-btn-cancel{padding:12px 18px;background:#f0ede8;color:#8a8278;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.modal-warn{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:16px;display:none}
+/* Buttons */
+.btn-primary{width:100%;padding:13px;background:#1a1714;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:8px}
+.btn-primary:hover{background:#333}
+.btn-primary:disabled{opacity:.4;cursor:default}
+.btn-secondary{padding:10px 18px;background:#f0ede8;color:#1a1714;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 
-/* ── EDIT EXERCISE MODAL ── */
-.edit-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
-.edit-modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
-.edit-modal-title{font-size:16px;font-weight:800;color:#1a1714;margin-bottom:2px}
-.edit-modal-sub{font-size:12px;color:#8a8278;margin-bottom:16px}
-.edit-modal-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-.edit-modal-field label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278}
-.edit-modal-field input{padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:15px;font-family:inherit;color:#1a1714;outline:none;text-align:center;transition:border .15s;width:100%}
-.edit-modal-field input:focus{border-color:#c8a45a}
-.stepper-row{display:flex;align-items:center;gap:8px}
-.stepper-row input{flex:1;padding:10px;border:1.5px solid #e8e4de;border-radius:8px;font-size:18px;font-weight:700;font-family:inherit;color:#1a1714;outline:none;text-align:center;transition:border .15s}
-.stepper-row input:focus{border-color:#c8a45a}
-.step-btn{width:38px;height:38px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;color:#1a1714}
-.step-btn:hover{border-color:#c8a45a;background:#fdf8f0}
-.carga-mode-toggle{display:flex;gap:6px;margin-bottom:10px}
-.carga-mode-btn{flex:1;padding:8px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:#8a8278;transition:all .12s}
-.carga-mode-btn.active{border-color:#c8a45a;background:#c8a45a;color:#fff}
-.carga-increments{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.inc-btn{padding:6px 10px;border-radius:7px;border:1.5px solid #e8e4de;background:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:#1a1714;transition:all .12s}
-.inc-btn:hover{border-color:#c8a45a;background:#fdf8f0}
-.rm-section{background:#faf8f5;border-radius:10px;padding:12px;margin-top:8px}
-.rm-section label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278;display:block;margin-bottom:6px}
-.rm-pct-row{display:flex;align-items:center;gap:8px;margin-top:10px}
-.rm-pct-row input[type=range]{flex:1;accent-color:#c8a45a}
-.rm-pct-val{font-size:14px;font-weight:800;color:#c8a45a;min-width:44px;text-align:right}
-.rm-result{font-size:13px;color:#8a8278;margin-top:6px;text-align:center}
-.rm-result strong{color:#1a1714}
-.edit-modal-actions{display:flex;gap:10px;margin-top:16px}
-.edit-modal-save{flex:1;padding:12px;background:#1a1714;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
-.edit-modal-save:hover{background:#333}
-.edit-modal-cancel{padding:12px 18px;background:#f0ede8;color:#8a8278;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.edit-modal-delete{padding:12px 14px;background:#fff0f0;color:#e05555;border:1px solid #fecaca;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
-.edit-modal-delete:hover{background:#fecaca}
-.edit-modal-status{font-size:12px;font-weight:500;margin-top:10px;display:none;padding:8px 12px;border-radius:7px}
-.edit-modal-status.success{display:block;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-.edit-modal-status.error{display:block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-tr.ex-row-clickable{cursor:pointer;transition:background .12s}
-tr.ex-row-clickable:hover td{background:rgba(200,164,90,.08) !important}
+/* Exercise form */
+.ex-row{display:flex;flex-direction:column;gap:10px;padding:12px;background:#faf8f5;border-radius:8px;margin-bottom:8px;border:1px solid #f0ede8}
+.ex-row-top{display:flex;gap:8px;align-items:flex-end}
+.ex-row-bottom{display:flex;gap:6px;align-items:center}
+.ex-row .field label{font-size:10px}
+.ex-list{margin-top:12px}
+.ex-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e8e4de;border-radius:8px;margin-bottom:6px}
+.ex-item-name{flex:1;font-size:13px;font-weight:600;color:#1a1714}
+.ex-item-meta{font-size:11px;color:#8a8278}
+.ex-item-grupo{font-size:10px;color:#c8a45a;font-weight:600;text-transform:uppercase}
+.ex-delete{background:none;border:none;color:#c4bdb5;cursor:pointer;font-size:16px;padding:2px 6px}
+.ex-delete:hover{color:#e05555}
+
+/* Session selector */
+.session-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:16px}
+.session-chip{padding:8px;border:1.5px solid #e8e4de;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;background:#fff;color:#8a8278;transition:all .15s}
+.session-chip:hover{border-color:#c8a45a;color:#c8a45a}
+.session-chip.active{background:#c8a45a;border-color:#c8a45a;color:#fff}
+.session-chip.has-exercises{background:#f0ede8;border-color:#c8a45a;color:#8a6020}
+
+/* Status */
+.status-msg{padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-top:12px;display:none}
+.status-msg.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;display:block}
+.status-msg.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;display:block}
+.status-msg.loading{background:#fefce8;color:#92400e;border:1px solid #fde68a;display:block}
+
+/* Summary */
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0ede8;font-size:13px}
+.summary-row:last-child{border-bottom:none}
+.summary-label{color:#8a8278}
+.summary-value{font-weight:600;color:#1a1714}
+
+/* Progress */
+.progress-bar{height:4px;background:#f0ede8;border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:#c8a45a;border-radius:2px;transition:width .3s}
 </style>
 </head>
 <body>
-<div class="app">
 
-<aside class="sidebar">
-  <div class="brand">
-    <div class="brand-dot" id="brand-dot">
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="brand-dot">
       <svg viewBox="0 0 14 14" fill="none">
         <rect x="1" y="1" width="4.5" height="12" rx="1.2" fill="#111"/>
         <rect x="8" y="1" width="4.5" height="7" rx="1.2" fill="#111"/>
       </svg>
     </div>
     <div>
-      <div class="brand-name">Training Cards</div>
-      <div class="brand-sub">Gestión de rutinas</div>
+      <div class="page-title">Nuevo Alumno</div>
+      <div class="page-sub">Training Cards Admin</div>
+    </div>
+    <a href="training-cards.html" class="back-link">← Volver a Cards</a>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:33%"></div></div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step-tab-1">
+      <div class="step-num">1</div> Datos del alumno
+    </div>
+    <div class="step" id="step-tab-2">
+      <div class="step-num">2</div> Sesiones
+    </div>
+    <div class="step" id="step-tab-3">
+      <div class="step-num">3</div> Ejercicios
     </div>
   </div>
 
-  <div id="upload-area">
-    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#242424;border-radius:8px;border:1px solid #2e2e2e">
-      <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
-      <div>
-        <div style="font-size:11px;color:#f0f0f0;font-weight:600">Supabase conectado</div>
-        <div style="font-size:10px;color:#666" id="db-status">Cargando datos...</div>
+  <!-- STEP 1: ALUMNO -->
+  <div id="step-1">
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">👤</span> Datos del alumno</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="nombre" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label>Objetivo</label>
+          <select id="objetivo">
+            <option value="">Seleccionar...</option>
+            <option value="Musculacion general">Musculación general</option>
+            <option value="Fuerza">Fuerza</option>
+            <option value="Circuitos">Circuitos</option>
+            <option value="Acondicionamiento">Acondicionamiento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fecha de inicio</label>
+          <input type="date" id="fecha_inicio">
+        </div>
+        <div class="field">
+          <label>Semanas de planificación</label>
+          <select id="semanas">
+            <option value="4">4 semanas (1 mes)</option>
+            <option value="8">8 semanas (2 meses)</option>
+            <option value="12" selected>12 semanas (3 meses)</option>
+            <option value="16">16 semanas (4 meses)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Días de entrenamiento</label>
+        <div class="days-grid" id="days-grid">
+          <button class="day-btn" onclick="toggleDay(this,'D1')">D1</button>
+          <button class="day-btn" onclick="toggleDay(this,'D2')">D2</button>
+          <button class="day-btn" onclick="toggleDay(this,'D3')">D3</button>
+          <button class="day-btn" onclick="toggleDay(this,'D4')">D4</button>
+          <button class="day-btn" onclick="toggleDay(this,'D5')">D5</button>
+          <button class="day-btn" onclick="toggleDay(this,'D6')">D6</button>
+          <button class="day-btn" onclick="toggleDay(this,'D7')">D7</button>
+        </div>
+        <div style="font-size:11px;color:#a39b8f;margin-top:6px">Elegí cuántos días por semana vas a entrenar. No hace falta que coincidan con días fijos de la semana — simplemente armás D1, D2, D3... según vayan llegando los entrenamientos.</div>
+      </div>
+      <div id="status-1" class="status-msg"></div>
+      <button class="btn-primary" onclick="crearAlumno()">Crear alumno y generar sesiones →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: SESIONES -->
+  <div id="step-2" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">📅</span> Sesiones generadas</div>
+      <div id="summary-alumno"></div>
+      <div id="status-2" class="status-msg"></div>
+      <button class="btn-primary" onclick="goToStep3()">Cargar ejercicios →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: EJERCICIOS -->
+  <div id="step-3" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🏋️</span> Cargar ejercicios</div>
+
+      <!-- Session selector -->
+      <div class="field" style="margin-bottom:14px">
+        <label>Seleccioná semana y día</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <select id="sel-semana-ej" style="flex:1;padding:9px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none" onchange="updateDaySelector()">
+          </select>
+          <select id="sel-dia-ej" style="flex:1;padding:9px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none" onchange="loadExistingExercises()">
+          </select>
+        </div>
+      </div>
+
+      <!-- Ejercicio form -->
+      <div class="ex-row">
+        <div class="ex-row-top">
+          <div class="field" style="flex:1">
+            <label>Grupo muscular</label>
+            <input type="text" id="ej-grupo" placeholder="Ej: Pecho" list="grupos-list">
+            <datalist id="grupos-list">
+              <option value="Pecho"><option value="Espalda"><option value="Hombros">
+              <option value="Bíceps"><option value="Tríceps"><option value="Piernas">
+              <option value="Glúteos"><option value="Abs"><option value="Core">
+              <option value="Torso Tracción"><option value="Torso Empuje">
+              <option value="Piernas Tracción"><option value="Piernas Empuje">
+            </datalist>
+          </div>
+          <div class="field" style="flex:2">
+            <label>Ejercicio</label>
+            <input type="text" id="ej-nombre" placeholder="Nombre">
+          </div>
+        </div>
+        <div class="ex-row-bottom">
+          <input type="number" id="ej-series" placeholder="Series" min="1" max="10" title="Series" style="width:70px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <input type="number" id="ej-reps" placeholder="Reps" min="1" max="50" title="Reps" style="width:70px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <input type="number" id="ej-carga" placeholder="Kg" min="0" step="0.5" title="Carga (kg)" style="width:70px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <div style="width:1px;height:32px;background:#e8e4de;margin:0 2px;flex-shrink:0"></div>
+          <input type="text" id="ej-tt" placeholder="T. Trabajo" title="Tiempo de trabajo" style="width:90px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <input type="text" id="ej-td" placeholder="T. Descanso" title="Tiempo de descanso" style="width:90px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <button onclick="agregarEjercicio()" style="margin-left:auto;flex-shrink:0;padding:10px 16px;background:#c8a45a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Agregar</button>
+        </div>
+      </div>
+
+      <!-- Lista ejercicios del día -->
+      <div id="ex-list-display" class="ex-list"></div>
+      <div id="status-3" class="status-msg"></div>
+
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-secondary" onclick="window.location.href='training-cards.html'">✓ Terminar</button>
+        <button class="btn-primary" style="margin-top:0" onclick="window.location.href='admin.html'">+ Nuevo alumno</button>
       </div>
     </div>
   </div>
 
-  <div id="error-area"></div>
-
-  <!-- VIEW TOGGLE -->
-  <div style="display:flex;gap:6px;margin-bottom:-8px">
-    <button id="btn-cards" onclick="switchView('cards')"
-      style="flex:1;padding:8px;border:1px solid #c8f135;border-radius:8px;background:#c8f135;color:#111;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
-      Cards
-    </button>
-    <button id="btn-planner" onclick="switchView('planner')"
-      style="flex:1;padding:8px;border:1px solid #2e2e2e;border-radius:8px;background:transparent;color:#666;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
-      Planificador
-    </button>
-  </div>
-
-  <!-- Botón nuevo alumno -->
-  <a href="admin.html" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border:1px solid #2e2e2e;border-radius:8px;color:#888;font-size:12px;font-weight:700;text-decoration:none;transition:all .15s;font-family:inherit"
-    onmouseover="this.style.borderColor='#c8f135';this.style.color='#c8f135'"
-    onmouseout="this.style.borderColor='#2e2e2e';this.style.color='#888'">
-    + Nuevo alumno
-  </a>
-
-  <div class="filter-section">
-    <div class="filter-label">Alumno</div>
-    <div class="student-list" id="student-list"><div class="placeholder-text">Cargá el Excel primero</div></div>
-  </div>
-
-  <div class="filter-section">
-    <div class="filter-label">Semana</div>
-    <div class="filter-row" id="week-filters"><div class="placeholder-text">—</div></div>
-  </div>
-
-  <div class="filter-section">
-    <div class="filter-label">Día</div>
-    <div class="filter-row" id="day-filters"><div class="placeholder-text">—</div></div>
-  </div>
-
-  <button id="extend-btn" onclick="abrirExtenderModal()" disabled
-    style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border:1px solid #2e2e2e;border-radius:8px;color:#888;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:none;transition:all .15s;width:100%"
-    onmouseover="if(!this.disabled){this.style.borderColor='#c8f135';this.style.color='#c8f135'}"
-    onmouseout="this.style.borderColor='#2e2e2e';this.style.color='#888'">
-    + Extender planificación
-  </button>
-
-  <button class="export-btn" id="export-btn" onclick="exportPDF()" disabled>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-      <polyline points="7 10 12 15 17 10"/>
-      <line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-    Exportar PDF
-  </button>
-  <button class="url-btn" id="url-btn" onclick="generateURL()" disabled>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
-      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
-    </svg>
-    Generar URL alumno
-  </button>
-</aside>
-
-<!-- URL MODAL -->
-<div id="url-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:24px">
-  <div id="url-modal-box" style="background:#fff;border-radius:20px;padding:28px 24px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div style="font-size:17px;font-weight:700;color:#111;margin-bottom:4px" id="modal-title">Link de rutina</div>
-    <div style="font-size:13px;color:#888;margin-bottom:20px" id="modal-sub">Mandá este link al alumno por WhatsApp</div>
-    <div style="background:#f4f4f4;border-radius:10px;padding:14px 16px;font-size:13px;color:#444;word-break:break-all;line-height:1.6;font-family:monospace;margin-bottom:16px" id="modal-url">Generando...</div>
-    <div style="display:flex;gap:10px">
-      <button onclick="copyURL()" id="copy-btn" style="flex:1;padding:13px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        Copiar link
-      </button>
-      <button onclick="closeModal()" style="padding:13px 18px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-        Cerrar
-      </button>
-    </div>
-  </div>
-</div>
-
-<main class="main" id="main-area">
-  <div>
-    <div class="main-title" id="main-title">Training <span id="title-accent">Cards</span></div>
-    <div class="main-meta" id="main-meta">Cargá tu planilla Excel para comenzar</div>
-  </div>
-  <div id="card-area">
-    <div class="welcome">
-      <div class="welcome-icon">🏋️</div>
-      <div class="welcome-title">Conectando a Supabase...</div>
-      <div class="welcome-sub">Los datos se cargan automáticamente.</div>
-    </div>
-  </div>
-  <div id="planner-area" style="display:none"></div>
-</main>
 </div>
 
 <script>
-// ── THEMES ────────────────────────────────────────────────────────────────
-// Each theme: { key (matches objetivo lowercase), label, dark (bool),
-//   bg, surface, surface2, border, accent, accentHover,
-//   text, text2, text3,
-//   headerBg, headerText, headerSub, badgeBg, badgeText,
-//   tableHead, tableRow1, tableRow2, tableBorder, tableText, tableText2,
-//   numBg, numText, accentVal,
-//   footerBg, footerBorder, footerText, footerCount,
-//   btnBg, btnText, btnHover,
-//   dot (sidebar indicator color)
-//   pdf: { bg, accent, accentR,accentG,accentB, rowEven, rowOdd, headerBg, textMain, textSub, textMuted, footerText }
-// }
-const THEMES = {
-  musculacion: {
-    keys: ['musculacion','musculación','musculacion general','musculación general'],
-    dark: false,
-    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
-    accent:'#b8956a', accentHover:'#9a7a54',
-    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
-    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
-    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
-    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#b8956a',
-    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#b8956a',
-    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
-    dot:'#b8956a',
-    headerAccentLine:'#b8956a',
-    pdf:{ accentR:184,accentG:149,accentB:106, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
-  },
-  fuerza: {
-    keys: ['fuerza'],
-    dark: false,
-    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
-    accent:'#9a9a9a', accentHover:'#7a7a7a',
-    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
-    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
-    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
-    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#9a9a9a',
-    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#9a9a9a',
-    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
-    dot:'#9a9a9a',
-    headerAccentLine:'#9a9a9a',
-    pdf:{ accentR:154,accentG:154,accentB:154, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
-  },
-  circuitos: {
-    keys: ['circuitos','circuito'],
-    dark: false,
-    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
-    accent:'#8b6914', accentHover:'#6b5010',
-    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
-    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
-    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
-    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#8b6914',
-    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#8b6914',
-    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
-    dot:'#8b6914',
-    headerAccentLine:'#8b6914',
-    pdf:{ accentR:139,accentG:105,accentB:20, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
-  },
-  acondicionamiento: {
-    keys: ['acondicionamiento'],
-    dark: false,
-    bg:'#f7f4ef', surface:'#ffffff', surface2:'#f0ede8', border:'#e8e4de',
-    accent:'#4a7c6f', accentHover:'#3a6058',
-    text:'#1a1714', text2:'#8a8278', text3:'#c4bdb5',
-    headerBg:'#ffffff', headerText:'#1a1714', headerSub:'#8a8278', badgeBg:'#f0ede8', badgeText:'#1a1714',
-    tableHead:'#f7f4ef', tableHeadText:'#c4bdb5', tableRow1:'#ffffff', tableRow2:'#faf8f5', tableBorder:'#f0ede8', tableText:'#1a1714', tableText2:'#8a8278',
-    numBg:'#f0ede8', numText:'#c4bdb5', accentVal:'#4a7c6f',
-    footerBg:'#f7f4ef', footerBorder:'#e8e4de', footerText:'#c4bdb5', footerCount:'#4a7c6f',
-    btnBg:'#1a1714', btnText:'#ffffff', btnHover:'#333028',
-    dot:'#4a7c6f',
-    headerAccentLine:'#4a7c6f',
-    pdf:{ accentR:74,accentG:124,accentB:111, rowEven:[255,255,255], rowOdd:[250,248,245], headerBg:[247,244,239], textMain:[26,23,20], textSub:[138,130,120], textMuted:[196,189,181], footerC:[196,189,181], avatarBg:[247,244,239], avatarText:[26,23,20] }
-  }
+const SUPABASE_URL = 'https://dclljrcwaddwbepfrgkv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjbGxqcmN3YWRkd2JlcGZyZ2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODM5MzYsImV4cCI6MjA5NTg1OTkzNn0.L5KOnUELiXUBHao8IdKVLciTrs2fwIS1a6Uqq6WCWP0';
+
+const headers = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation'
 };
 
-function getTheme(objetivo) {
-  const o = (objetivo||'').toLowerCase().trim();
-  for (const key of Object.keys(THEMES)) {
-    if (THEMES[key].keys.some(k => o.includes(k) || k.includes(o))) return THEMES[key];
+let selectedDays = [];
+let currentAlumnoId = null;
+let currentSesiones = [];
+let currentExercicios = {};  // {sesion_id: [{grupo, ejercicio, series, reps, carga, tiempo_trabajo, tiempo_descanso}]}
+
+// ── DÍAS ──────────────────────────────────────────────────────────────
+function toggleDay(btn, day) {
+  btn.classList.toggle('selected');
+  if (selectedDays.includes(day)) {
+    selectedDays = selectedDays.filter(d => d !== day);
+  } else {
+    selectedDays.push(day);
   }
-  return THEMES.musculacion;
 }
 
-// ── STATE ─────────────────────────────────────────────────────────────────
-let DB = {}, selAlumno = null, selSemana = null, selDia = null, fileName = '';
+// ── STEP 1: CREAR ALUMNO + SESIONES ──────────────────────────────────
+async function crearAlumno() {
+  const nombre      = document.getElementById('nombre').value.trim();
+  const objetivo    = document.getElementById('objetivo').value;
+  const fecha       = document.getElementById('fecha_inicio').value;
+  const semanas     = parseInt(document.getElementById('semanas').value);
+  const status      = document.getElementById('status-1');
 
-async function loadFromSupabase() {
+  if (!nombre || !objetivo || !fecha || selectedDays.length === 0) {
+    showStatus(status, 'error', 'Completá todos los campos y elegí al menos un día.');
+    return;
+  }
+
+  showStatus(status, 'loading', 'Creando alumno...');
+
   try {
-    document.getElementById('db-status').textContent = 'Cargando...';
-
-    // Query 1: ejercicios con JOIN
-    const qEj = `${SUPABASE_URL}/rest/v1/ejercicios?select=id,alumno_id,sesion_id,grupo_muscular,ejercicio,series,reps,carga,rm,tiempo_trabajo,tiempo_descanso,orden,sesiones(id,semana,dia,mes,fecha),alumnos(id,nombre,objetivo)&order=sesiones(semana),sesiones(dia),orden`;
-    // Query 2: sesiones vacías (LEFT JOIN con ejercicios, traer todas)
-    const qSes = `${SUPABASE_URL}/rest/v1/sesiones?select=id,alumno_id,semana,dia,mes,fecha,alumnos(id,nombre,objetivo)&order=semana,dia`;
-
-    const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
-    const [resEj, resSes] = await Promise.all([
-      fetch(qEj,  { headers: hdrs }),
-      fetch(qSes, { headers: hdrs })
-    ]);
-    if (!resEj.ok)  throw new Error('Error ejercicios ' + resEj.status);
-    if (!resSes.ok) throw new Error('Error sesiones '   + resSes.status);
-    const rows    = await resEj.json();
-    const sesRows = await resSes.json();
-
-    // Preserve existing order if reloading
-    const existingOrder = Object.keys(DB);
-    DB = {};
-
-    // 1. Registrar todas las sesiones (incluso vacías) para que aparezcan en el sidebar
-    sesRows.forEach(ses => {
-      const alumno = ses.alumnos;
-      if (!alumno) return;
-      const nombre  = String(alumno.nombre  || '').trim();
-      const objetivo = String(alumno.objetivo || '').trim();
-      if (!nombre) return;
-      if (!DB[nombre]) DB[nombre] = { objetivo, alumno_id: ses.alumno_id, rows: [], sesiones: [] };
-      // Track sesion for sidebar even if empty
-      DB[nombre].sesiones.push({ id: ses.id, s: parseInt(ses.semana)||0, d: parseInt(ses.dia)||0, mes: parseInt(ses.mes)||1 });
+    // 1. Insertar alumno
+    const resA = await fetch(`${SUPABASE_URL}/rest/v1/alumnos`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        nombre, objetivo,
+        fecha_inicio: fecha,
+        dias_entrenamiento: selectedDays.join(', ')
+      })
     });
+    if (!resA.ok) throw new Error(await resA.text());
+    const alumno = (await resA.json())[0];
+    currentAlumnoId = alumno.id;
 
-    // 2. Agregar ejercicios encima
-    rows.forEach(row => {
-      const alumno  = row.alumnos;
-      const sesion  = row.sesiones;
-      if (!alumno || !sesion) return;
-      const nombre  = String(alumno.nombre || '').trim();
-      const objetivo = String(alumno.objetivo || '').trim();
-      if (!nombre) return;
-      if (!DB[nombre]) DB[nombre] = { objetivo, alumno_id: row.alumno_id, rows: [], sesiones: [] };
-      DB[nombre].rows.push({
-        id:        row.id,
-        s:         parseInt(sesion.semana) || 0,
-        d:         parseInt(sesion.dia)   || 0,
-        mes:       parseInt(sesion.mes)   || 1,
-        sesion_id: row.sesion_id || sesion.id,
-        m:   String(row.grupo_muscular || '').trim().toUpperCase(),
-        e:   String(row.ejercicio || '').trim().replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
-        sr:  parseFloat(row.series) || 0,
-        r:   parseFloat(row.reps)   || 0,
-        c:   parseFloat(row.carga)  || 0,
-        tt:  String(row.tiempo_trabajo  || '').trim(),
-        td:  String(row.tiempo_descanso || '').trim(),
-        rm:  row.rm || null,
-        orden: parseInt(row.orden) || 0,
-      });
+    showStatus(status, 'loading', `Alumno creado (ID: ${alumno.id}). Generando sesiones...`);
+
+    // 2. Generar sesiones
+    const startDate = new Date(fecha + 'T00:00:00');
+    const sesiones  = [];
+    const numDias   = selectedDays.length;
+
+    for (let week = 1; week <= semanas; week++) {
+      const mes = Math.ceil(week / 4);
+      for (let dia = 1; dia <= numDias; dia++) {
+        const offset  = (week - 1) * 7 + (dia - 1);
+        const fecha_s = new Date(startDate);
+        fecha_s.setDate(startDate.getDate() + offset);
+        sesiones.push({
+          alumno_id: currentAlumnoId,
+          fecha: fecha_s.toISOString().split('T')[0],
+          mes, semana: week, dia
+        });
+      }
+    }
+
+    const resS = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(sesiones)
     });
+    if (!resS.ok) throw new Error(await resS.text());
+    currentSesiones = await resS.json();
 
-    // Restore original alumno order if reloading
-    if (existingOrder.length > 0) {
-      const newDB = {};
-      // First add alumnos in original order
-      existingOrder.forEach(name => { if (DB[name]) newDB[name] = DB[name]; });
-      // Then add any new alumnos
-      Object.keys(DB).forEach(name => { if (!newDB[name]) newDB[name] = DB[name]; });
-      Object.assign(DB, newDB);
-      // Replace DB keys in order
-      const ordered = {};
-      Object.keys(newDB).forEach(k => ordered[k] = DB[k]);
-      for (const k of Object.keys(DB)) delete DB[k];
-      Object.assign(DB, ordered);
-    }
+    showStatus(status, 'success', `✓ ${currentSesiones.length} sesiones generadas correctamente.`);
 
-    const count = Object.keys(DB).length;
-    document.getElementById('db-status').textContent = `${count} alumno${count!==1?'s':''} cargado${count!==1?'s':''}`;
+    // Mostrar resumen
+    goToStep2(nombre, objetivo, semanas, numDias);
 
-    if (count > 0) {
-      const saved = sessionStorage.getItem('tc_alumno');
-      const savedSem = parseInt(sessionStorage.getItem('tc_semana'));
-      const savedDia = parseInt(sessionStorage.getItem('tc_dia'));
-      sessionStorage.removeItem('tc_alumno');
-      sessionStorage.removeItem('tc_semana');
-      sessionStorage.removeItem('tc_dia');
-
-      const savedView = sessionStorage.getItem('tc_view');
-      sessionStorage.removeItem('tc_view');
-
-      const first = (saved && DB[saved]) ? saved : Object.keys(DB)[0];
-      selAlumno = first;
-      const sems = getSemanas(first);
-      selSemana = (savedSem && sems.includes(savedSem)) ? savedSem : sems[0];
-      const dias = getDias(first, selSemana);
-      selDia = (savedDia && dias.includes(savedDia)) ? savedDia : dias[0];
-
-      renderSidebar(); renderCard(); renderPlanner();
-      if (savedView === 'planner') switchView('planner');
-      document.getElementById('export-btn').disabled = false;
-      document.getElementById('url-btn').disabled = false;
-      document.getElementById('extend-btn').disabled = false;
-    }
   } catch(e) {
-    document.getElementById('db-status').textContent = 'Error al conectar';
-    document.getElementById('db-status').style.color = '#ff6b6b';
-    console.error(e);
+    showStatus(status, 'error', 'Error: ' + e.message);
   }
 }
 
-function normalizeKey(col) {
-  const c = String(col).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  if (c.includes('EJERCIC')) return 'EJERCICIO';
-  if (c.includes('GRUPO') || c === 'MUSCULO' || c.includes('MUSCULAR')) return 'MUSCULO';
-  if (c === 'SEMANA' || c === 'SEM') return 'SEMANA';
-  if (c === 'DIA') return 'DIA';
-  if (c === 'SERIES' || c === 'SR') return 'SERIES';
-  if (c.startsWith('REP')) return 'REPS';
-  if (c === 'CARGA' || c === 'KG' || c === 'PESO') return 'CARGA';
-  if (c.includes('TRABAJO')) return 'T_TRABAJO';
-  if (c.includes('DESCANSO')) return 'T_DESCANSO';
-  if (c === 'OBJETIVO' || c === 'OBJ') return 'OBJETIVO';
-  if (c === 'ALUMNO' || c === 'NOMBRE') return 'ALUMNO';
-  return c;
+function goToStep2(nombre, objetivo, semanas, dias) {
+  document.getElementById('step-1').style.display = 'none';
+  document.getElementById('step-2').style.display = 'block';
+  document.getElementById('progress').style.width = '66%';
+  setStepDone(1); setStepActive(2);
+
+  document.getElementById('summary-alumno').innerHTML = `
+    <div class="summary-row"><span class="summary-label">Alumno</span><span class="summary-value">${nombre}</span></div>
+    <div class="summary-row"><span class="summary-label">Objetivo</span><span class="summary-value">${objetivo}</span></div>
+    <div class="summary-row"><span class="summary-label">Planificación</span><span class="summary-value">${semanas} semanas · ${dias} días/semana</span></div>
+    <div class="summary-row"><span class="summary-label">Días</span><span class="summary-value">${selectedDays.join(', ')}</span></div>
+    <div class="summary-row"><span class="summary-label">Total sesiones</span><span class="summary-value">${currentSesiones.length} sesiones generadas ✓</span></div>
+  `;
 }
 
-function formatTime(val) {
-  if (val === null || val === undefined || val === '') return '';
-  const s = String(val).trim();
-  if (s === '' || s === '0' || s.toLowerCase() === 'nan') return '';
+function goToStep3() {
+  document.getElementById('step-2').style.display = 'none';
+  document.getElementById('step-3').style.display = 'block';
+  document.getElementById('progress').style.width = '100%';
+  setStepDone(2); setStepActive(3);
 
-  // Excel decimal fraction of day (e.g. 0.01388...)
-  const num = parseFloat(s);
-  if (!isNaN(num) && s.indexOf(':') === -1) {
-    if (num > 0 && num < 1) {
-      const totalSec = Math.round(num * 86400);
-      const mins = Math.floor(totalSec / 60);
-      const secs = totalSec % 60;
-      return `${mins}:${String(secs).padStart(2,'0')}`;
-    }
-    return '';
+  // Poblar selector de semanas
+  const semanas = [...new Set(currentSesiones.map(s => s.semana))].sort((a,b)=>a-b);
+  const selSem = document.getElementById('sel-semana-ej');
+  selSem.innerHTML = semanas.map(s => `<option value="${s}">Semana ${s}</option>`).join('');
+  updateDaySelector();
+}
+
+function updateDaySelector() {
+  const semana  = parseInt(document.getElementById('sel-semana-ej').value);
+  const dias    = currentSesiones.filter(s => s.semana === semana).sort((a,b)=>a.dia-b.dia);
+  const selDia  = document.getElementById('sel-dia-ej');
+  selDia.innerHTML = dias.map(s => `<option value="${s.id}">Día ${s.dia} — ${s.fecha}</option>`).join('');
+  loadExistingExercises();
+}
+
+function loadExistingExercises() {
+  const sesionId = parseInt(document.getElementById('sel-dia-ej').value);
+  const list = currentExercicios[sesionId] || [];
+  renderExList(sesionId, list);
+}
+
+function renderExList(sesionId, list) {
+  const el = document.getElementById('ex-list-display');
+  if (!list.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#c4bdb5;padding:8px 0">Sin ejercicios cargados en este día</div>';
+    return;
   }
-
-  // Text format h:mm:ss or hh:mm:ss (e.g. "00:20:00", "0:01:30")
-  const parts = s.split(':');
-  if (parts.length === 3) {
-    const h  = parseInt(parts[0]) || 0;
-    const m  = parseInt(parts[1]) || 0;
-    const sc = parseInt(parts[2]) || 0;
-    const totalSec = h * 3600 + m * 60 + sc;
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
-    return `${mins}:${String(secs).padStart(2,'0')}`;
-  }
-  // Already m:ss
-  if (parts.length === 2) return s;
-  return s;
-}
-
-function handleFile(file) {
-  if (!file) return;
-  fileName = file.name;
-  document.getElementById('error-area').innerHTML = '';
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      const objetivos = {};
-      const dataSheetName = wb.SheetNames.find(n => ['data','datos'].includes(n.toLowerCase()));
-      if (dataSheetName) {
-        XLSX.utils.sheet_to_json(wb.Sheets[dataSheetName], { defval: '' }).forEach(row => {
-          const n = {};
-          Object.keys(row).forEach(k => { n[normalizeKey(k)] = row[k]; });
-          const nombre = String(n['ALUMNO']||'').trim().toLowerCase();
-          const obj    = String(n['OBJETIVO']||'').trim();
-          if (nombre) objetivos[nombre] = obj;
-        });
-      }
-
-      DB = {};
-      const warnings = [];
-      wb.SheetNames.forEach(sheetName => {
-        if (SKIP.includes(sheetName.toLowerCase())) return;
-        const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
-        if (!rawRows.length) return;
-        const parsed = rawRows.map(row => {
-          const n = {};
-          Object.keys(row).forEach(k => { n[normalizeKey(k)] = row[k]; });
-          return n;
-        });
-        const sample = parsed[0];
-        if (!('SEMANA' in sample) || !('DIA' in sample) || !('EJERCICIO' in sample)) {
-          warnings.push(`Pestaña <strong>${sheetName}</strong>: faltan columnas (SEMANA, DIA, EJERCICIO)`);
-          return;
-        }
-        const rows = parsed
-          .filter(n => n['SEMANA']!=='' && n['DIA']!=='' && n['EJERCICIO']!=='')
-          .map(n => ({
-            s: parseInt(n['SEMANA'])||0, d: parseInt(n['DIA'])||0,
-            m: String(n['MUSCULO']||'').trim().toUpperCase(),
-            e: String(n['EJERCICIO']||'').trim().replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()),
-            sr: parseFloat(n['SERIES']||0)||0,
-            r: parseFloat(n['REPS']||0)||0,
-            c: parseFloat(n['CARGA']||0)||0,
-            tt: formatTime(n['T_TRABAJO']),
-            td: formatTime(n['T_DESCANSO']),
-          })).filter(r => r.s>0 && r.d>0);
-        if (!rows.length) return;
-        const key = sheetName.toLowerCase();
-        const obj = objetivos[key]
-          || objetivos[Object.keys(objetivos).find(k=>k.includes(key)||key.includes(k))||'']
-          || '';
-        DB[sheetName] = { objetivo: obj, rows };
-      });
-
-      if (!Object.keys(DB).length) {
-        document.getElementById('error-area').innerHTML = `<div class="error-msg">No se encontraron pestañas válidas. Columnas requeridas: SEMANA, DIA, EJERCICIO, GRUPO MUSCULAR, SERIES, REPS, CARGA</div>`;
-        return;
-      }
-      if (warnings.length) document.getElementById('error-area').innerHTML = `<div class="error-msg">${warnings.join('<br>')}</div>`;
-
-      document.getElementById('upload-area').innerHTML = `
-        <div class="file-loaded">
-          <div class="file-loaded-icon">📊</div>
-          <div style="flex:1;min-width:0">
-            <div class="file-loaded-name">${fileName}</div>
-            <div class="file-loaded-sub">${Object.keys(DB).length} alumno${Object.keys(DB).length!==1?'s':''} cargado${Object.keys(DB).length!==1?'s':''}</div>
-          </div>
-          <span class="file-change" onclick="resetFile()">Cambiar</span>
-        </div>`;
-
-      const first = Object.keys(DB)[0];
-      selAlumno = first;
-      selSemana = getSemanas(first)[0];
-      selDia    = getDias(first, selSemana)[0];
-      renderSidebar(); renderCard(); renderPlanner();
-      document.getElementById('export-btn').disabled = false;
-      document.getElementById('url-btn').disabled = false;
-      document.getElementById('extend-btn').disabled = false;
-    } catch(err) {
-      document.getElementById('error-area').innerHTML = `<div class="error-msg">Error al leer el archivo: ${err.message}</div>`;
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function resetFile() {
-  DB={}; selAlumno=null; selSemana=null; selDia=null; fileName='';
-  document.getElementById('upload-area').innerHTML = `
-    <div class="upload-zone">
-      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-      <div class="upload-icon">📂</div>
-      <div class="upload-text"><strong>Subí tu planilla Excel</strong>Arrastrá o hacé clic para seleccionar</div>
-    </div>`;
-  document.getElementById('error-area').innerHTML='';
-  document.getElementById('student-list').innerHTML='<div class="placeholder-text">Cargá el Excel primero</div>';
-  document.getElementById('week-filters').innerHTML='<div class="placeholder-text">—</div>';
-  document.getElementById('day-filters').innerHTML='<div class="placeholder-text">—</div>';
-  document.getElementById('card-area').innerHTML=`<div class="welcome"><div class="welcome-icon">🏋️</div><div class="welcome-title">Ninguna planilla cargada</div><div class="welcome-sub">Subí tu Excel para comenzar.</div></div>`;
-  document.getElementById('main-title').innerHTML='Training <span id="title-accent">Cards</span>';
-  document.getElementById('main-meta').textContent='Cargá tu planilla Excel para comenzar';
-  document.getElementById('export-btn').disabled=true;
-  applyTheme(THEMES.musculacion);
-}
-
-document.addEventListener('dragover',e=>e.preventDefault());
-document.addEventListener('drop',e=>{
-  e.preventDefault();
-  const f=e.dataTransfer.files[0];
-  if(f&&/\.(xlsx|xls)$/i.test(f.name)) handleFile(f);
-});
-
-function getInitials(n){ return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
-function getSemanas(a){
-  const fromRows = DB[a].rows.map(r=>r.s);
-  const fromSes  = (DB[a].sesiones||[]).map(r=>r.s);
-  return [...new Set([...fromRows,...fromSes])].sort((a,b)=>a-b);
-}
-function getDias(a,s){
-  const fromRows = DB[a].rows.filter(r=>r.s===s).map(r=>r.d);
-  const fromSes  = (DB[a].sesiones||[]).filter(r=>r.s===s).map(r=>r.d);
-  return [...new Set([...fromRows,...fromSes])].sort((a,b)=>a-b);
-}
-
-// ── APPLY THEME ───────────────────────────────────────────────────────────
-function applyTheme(t) {
-  const main = document.getElementById('main-area');
-  main.style.background = t.bg;
-  document.getElementById('brand-dot').style.background = t.accent;
-
-  // export btn
-  const btn = document.getElementById('export-btn');
-  btn.style.background = t.btnBg;
-  btn.style.color = t.btnText;
-
-  // week/day active buttons
-  document.querySelectorAll('.filter-btn.active').forEach(b => {
-    b.style.borderColor = t.accent;
-    b.style.color = t.accent;
-  });
-}
-
-// ── RENDER SIDEBAR ────────────────────────────────────────────────────────
-function renderSidebar() {
-  const t = selAlumno ? getTheme(DB[selAlumno].objetivo) : THEMES.musculacion;
-
-  document.getElementById('student-list').innerHTML = Object.keys(DB).map(name => {
-    const nt = getTheme(DB[name].objetivo);
-    const active = selAlumno===name;
-    return `<button class="student-pill ${active?'active':''}"
-      style="${active ? `background:#ffffff18;border-color:${nt.accent}` : ''}"
-      onclick="selectAlumno('${name.replace(/'/g,"\\'")}')">
-      <div class="pill-avatar" style="background:${nt.dot}22;color:${nt.dot};font-weight:700">
-        ${getInitials(name)}
+  el.innerHTML = list.map((ex, i) => `
+    <div class="ex-item">
+      <div style="flex:1">
+        <div class="ex-item-grupo">${ex.grupo_muscular}</div>
+        <div class="ex-item-name">${ex.ejercicio}</div>
+        <div class="ex-item-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga}kg${ex.tiempo_trabajo ? ' · ' + ex.tiempo_trabajo : ''}${ex.tiempo_descanso ? ' / ' + ex.tiempo_descanso : ''}</div>
       </div>
-      <div>
-        <div class="pill-name" style="color:#f0f0f0;font-weight:${active?'700':'500'}">${name}</div>
-        <div class="pill-obj" style="color:#666">${DB[name].objetivo||'Sin objetivo'}</div>
-      </div>
-      <div class="theme-dot" style="background:${nt.dot}"></div>
-    </button>`;
-  }).join('');
-
-  document.getElementById('week-filters').innerHTML = selAlumno
-    ? getSemanas(selAlumno).map(s=>`
-        <button class="filter-btn ${selSemana===s?'active':''}"
-          style="${selSemana===s?`border-color:${t.accent};color:${t.accent}`:''}"
-          onclick="selectSemana(${s})">S${s}</button>`).join('')
-    : '<div class="placeholder-text">—</div>';
-
-  document.getElementById('day-filters').innerHTML = (selAlumno&&selSemana!==null)
-    ? getDias(selAlumno,selSemana).map(d=>`
-        <button class="filter-btn ${selDia===d?'active':''}"
-          style="${selDia===d?`border-color:${t.accent};color:${t.accent}`:''}"
-          onclick="selectDia(${d})">D${d}</button>`).join('')
-    : '<div class="placeholder-text">—</div>';
-
-  applyTheme(t);
+      <button class="ex-delete" onclick="eliminarEjercicio(${sesionId},${i})">✕</button>
+    </div>`).join('');
 }
 
-// ── RENDER CARD ───────────────────────────────────────────────────────────
-function renderCard() {
-  const area  = document.getElementById('card-area');
-  const title = document.getElementById('main-title');
-  const meta  = document.getElementById('main-meta');
+async function agregarEjercicio() {
+  const sesionId = parseInt(document.getElementById('sel-dia-ej').value);
+  const grupo    = document.getElementById('ej-grupo').value.trim();
+  const nombre   = document.getElementById('ej-nombre').value.trim();
+  const series   = parseInt(document.getElementById('ej-series').value) || 0;
+  const reps     = parseInt(document.getElementById('ej-reps').value) || 0;
+  const carga    = parseFloat(document.getElementById('ej-carga').value) || 0;
+  const tt       = document.getElementById('ej-tt').value.trim();
+  const td       = document.getElementById('ej-td').value.trim();
+  const status   = document.getElementById('status-3');
 
-  if (!selAlumno) return;
-
-  const t = getTheme(DB[selAlumno].objetivo);
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.orden-b.orden);
-
-  title.innerHTML = `<span style="color:${t.text}">${selAlumno} — </span><span style="color:${t.accent}">Semana ${selSemana}, Día ${selDia}</span>`;
-  meta.style.color = t.text2;
-  meta.textContent = `${DB[selAlumno].objetivo||'Sin objetivo'} · ${ejercicios.length} ejercicio${ejercicios.length!==1?'s':''}`;
-
-  document.getElementById('main-area').style.background = t.bg;
-
-  if (!ejercicios.length) {
-    area.innerHTML = `<div class="card" style="background:${t.surface};border:1px solid ${t.border}"><div class="empty" style="color:${t.text2}">Sin ejercicios para este día</div></div>`;
+  if (!grupo || !nombre || !series) {
+    showStatus(status, 'error', 'Completá grupo, ejercicio y series.');
     return;
   }
 
-  area.innerHTML = `
-    <div class="card" style="background:${t.surface};border:1px solid ${t.border};box-shadow:0 1px 4px rgba(0,0,0,.04)">
-      <div class="card-header-bar" style="background:${t.headerBg};border-bottom:1px solid ${t.border};position:relative">
-        <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:${t.accent};border-radius:0"></div>
-        <div class="card-header-left">
-          <div class="card-avatar-big" style="background:${t.accent}18;color:${t.accent};font-size:13px;font-weight:800">${getInitials(selAlumno)}</div>
-          <div>
-            <div class="card-alumno" style="color:${t.text};font-size:16px;font-weight:700;letter-spacing:-.4px">${selAlumno}</div>
-            <div class="card-objetivo" style="color:${t.text2};font-size:11px;font-weight:400">${DB[selAlumno].objetivo||''}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="card-badge" style="background:${t.accent}12;color:${t.accent};font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid ${t.accent}28">Sem ${selSemana} · Día ${selDia}</div>
-          <a href="resumen-alumno.html?alumno_id=${DB[selAlumno].alumno_id}" style="display:inline-flex;align-items:center;gap:5px;background:${t.accent};color:#fff;font-size:11px;font-weight:700;padding:6px 13px;border-radius:20px;text-decoration:none;white-space:nowrap">📊 Resumen</a>
-        </div>
-      </div>
-      <table class="ex-table">
-        <thead>
-          <tr style="background:${t.tableHead}">
-            <th style="color:${t.tableHeadText}">Ejercicio</th>
-            <th style="color:${t.tableHeadText}">Series</th>
-            <th style="color:${t.tableHeadText}">Reps</th>
-            <th style="color:${t.tableHeadText}">Carga</th>
-            <th style="color:${t.tableHeadText};line-height:1.3">Tiempo<br><span style="font-weight:400;font-size:9px">Trabajo</span></th>
-            <th style="color:${t.tableHeadText};line-height:1.3">Tiempo<br><span style="font-weight:400;font-size:9px">Descanso</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${ejercicios.map((ex,i)=>`
-            <tr class="ex-row-clickable" style="background:${i%2===0?t.tableRow1:t.tableRow2}" onclick="openEditModalByIndex(${i})">
-              <td style="border-bottom-color:${t.tableBorder}">
-                <div class="ex-name-cell">
-                  <span class="ex-num" style="background:${t.numBg};color:${t.numText}">${i+1}</span>
-                  <div>
-                    <div class="ex-name" style="color:${t.tableText}">${ex.e}</div>
-                    <div class="ex-muscle" style="color:${t.tableText2}">${ex.m.toLowerCase()}</div>
-                  </div>
-                </div>
-              </td>
-              <td style="border-bottom-color:${t.tableBorder}"><div class="ex-val" style="color:${t.accentVal}">${ex.sr}</div></td>
-              <td style="border-bottom-color:${t.tableBorder}"><div class="ex-val" style="color:${t.tableText}">${ex.r>0?ex.r:'—'}</div></td>
-              <td style="border-bottom-color:${t.tableBorder}"><div class="ex-val" style="color:${t.tableText}">${ex.c>0?ex.c+' kg':'—'}</div></td>
-              <td style="border-bottom-color:${t.tableBorder};vertical-align:middle"><div class="ex-val" style="color:${t.tableText};font-size:12px;display:flex;align-items:center;justify-content:center;height:100%">${ex.tt||'—'}</div></td>
-              <td style="border-bottom-color:${t.tableBorder};vertical-align:middle"><div class="ex-val" style="color:${t.tableText};font-size:12px;display:flex;align-items:center;justify-content:center;height:100%">${ex.td||'—'}</div></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-      <div class="card-footer" style="background:${t.footerBg};border-top-color:${t.footerBorder}">
-        <div class="card-footer-text" style="color:${t.footerText}">Training Cards · Ariel Stamile</div>
-        <div class="card-footer-count" style="color:${t.footerCount}">${ejercicios.length} ejercicios</div>
-      </div>
-    </div>`;
-}
-
-function selectAlumno(name) {
-  selAlumno=name; selSemana=getSemanas(name)[0]; selDia=getDias(name,selSemana)[0];
-  renderSidebar(); renderCard(); renderPlanner();
-  document.getElementById('extend-btn').disabled = false;
-}
-function selectSemana(s) {
-  selSemana=s;
-  const diasDisponibles = getDias(selAlumno, s);
-  selDia = diasDisponibles.includes(selDia) ? selDia : diasDisponibles[0];
-  renderSidebar(); renderCard(); renderPlanner();
-}
-function selectDia(d) {
-  selDia=d; renderSidebar(); renderCard(); renderPlanner();
-}
-
-// ── GENERATE STUDENT URL ──────────────────────────────────────────────────
-async function generateURL() {
-  if (!selAlumno) return;
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.orden-b.orden);
-  if (!ejercicios.length) { alert('No hay ejercicios para este día'); return; }
-
-  const payload = {
-    alumno:    selAlumno,
-    objetivo:  DB[selAlumno].objetivo || '',
-    semana:    selSemana,
-    dia:       selDia,
-    ejercicios: ejercicios.map(ex => ({
-      id: ex.id, e: ex.e, m: ex.m, sr: ex.sr, r: ex.r, c: ex.c, tt: ex.tt, td: ex.td
-    }))
-  };
-
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  const base = window.location.href.replace(/[^/]*$/, '');
-  const longUrl = `${base}alumno.html?d=${encoded}`;
-
-  // Theme modal
-  const t = getTheme(DB[selAlumno].objetivo);
-  const box = document.getElementById('url-modal-box');
-  box.style.background = t.surface || '#fff';
-  const copyBtn = document.getElementById('copy-btn');
-  copyBtn.style.background = t.headerBg || '#111';
-
-  document.getElementById('modal-title').textContent = `Rutina de ${selAlumno}`;
-  document.getElementById('modal-sub').textContent   = `Semana ${selSemana} · Día ${selDia} · ${ejercicios.length} ejercicios`;
-  // Store URL and show modal — button enabled from the start
-  window._currentURL = longUrl;
-  document.getElementById('modal-url').textContent = 'Generando link corto...';
-  document.getElementById('url-modal').style.display = 'flex';
-  copyBtn.disabled = false;
-  copyBtn.style.opacity = '1';
-  copyBtn.style.display = 'flex';
-
-  // Usar Worker de Cloudflare como intermediario (resuelve CORS)
   try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 8000);
-    const workerUrl = `https://dawn-field-3f9b.arielstamile.workers.dev?url=${encodeURIComponent(longUrl)}`;
-    const res = await fetch(workerUrl, { signal: ctrl.signal });
-    if (res.ok) {
-      const short = (await res.text()).trim();
-      if (short.startsWith('http')) {
-        // Mostrar el link corto visualmente pero copiar siempre la URL larga
-        document.getElementById('modal-url').textContent = short;
-      } else {
-        document.getElementById('modal-url').textContent = 'Link listo ✓';
-      }
-    } else {
-      document.getElementById('modal-url').textContent = 'Link listo ✓';
-    }
-  } catch(e) {
-    document.getElementById('modal-url').textContent = 'Link listo ✓';
-  }
-}
-
-let _copyTimeout;
-function copyURL() {
-  const url = window._currentURL || '';
-  if (!url) return;
-  const btn = document.getElementById('copy-btn');
-
-  // Method 1: modern clipboard API
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(() => {
-      btn.textContent = '✓ Copiado';
-      setTimeout(() => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; }, 2000);
-    }).catch(() => fallbackCopy(url, btn));
-  } else {
-    fallbackCopy(url, btn);
-  }
-}
-
-function fallbackCopy(url, btn) {
-  // Method 2: create temp textarea and execCommand
-  const ta = document.createElement('textarea');
-  ta.value = url;
-  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try {
-    document.execCommand('copy');
-    btn.textContent = '✓ Copiado';
-    setTimeout(() => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; }, 2000);
-  } catch(e) {
-    btn.textContent = 'Error — copiá manualmente';
-  }
-  document.body.removeChild(ta);
-}
-
-function closeModal() {
-  document.getElementById('url-modal').style.display = 'none';
-}
-
-// Close modal on backdrop click
-document.addEventListener('click', e => {
-  const modal = document.getElementById('url-modal');
-  if (e.target === modal) closeModal();
-});
-
-// ── EXPORT PDF ────────────────────────────────────────────────────────────
-function exportPDF() {
-  if (!selAlumno) return;
-  const ejercicios = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.orden-b.orden);
-  if (!ejercicios.length) { alert('No hay ejercicios para exportar'); return; }
-
-  const t = getTheme(DB[selAlumno].objetivo);
-  const p = t.pdf;
-  const { jsPDF } = window.jspdf;
-
-  // Mobile card: 110mm wide (extra columns), dynamic height
-  const W   = 110;
-  const M   = 4;
-  const rH  = 13;
-  const headerH = 22;
-  const tableHeaderH = 8;
-  const footerH = 12;
-  const topPad = 5;
-
-  const totalH = topPad + headerH + tableHeaderH + (ejercicios.length * rH) + footerH + 6;
-
-  const doc = new jsPDF({ unit:'mm', format:[W, totalH], orientation:'portrait' });
-
-  // ── HEADER ──
-  doc.setFillColor(p.accentR, p.accentG, p.accentB);
-  doc.rect(0, 0, W, headerH + topPad, 'F');
-
-  doc.setFillColor(...p.avatarBg);
-  doc.circle(M + 5, topPad + 10, 6, 'F');
-  doc.setTextColor(...p.avatarText);
-  doc.setFontSize(6); doc.setFont('helvetica','bold');
-  doc.text(getInitials(selAlumno), M + 5, topPad + 11.5, {align:'center'});
-
-  doc.setFontSize(11); doc.setTextColor(255,255,255);
-  doc.text(selAlumno, M + 14, topPad + 8);
-
-  doc.setFontSize(6); doc.setFont('helvetica','normal');
-  doc.setGState(doc.GState({opacity:0.8}));
-  doc.text(DB[selAlumno].objetivo||'', M + 14, topPad + 13);
-  doc.setGState(doc.GState({opacity:1}));
-
-  doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
-  doc.setGState(doc.GState({opacity:0.85}));
-  doc.text(`S${selSemana} · D${selDia}`, W - M - 1, topPad + 10, {align:'right'});
-  doc.setGState(doc.GState({opacity:1}));
-
-  // ── TABLE HEADER ──
-  let y = topPad + headerH;
-  doc.setFillColor(...p.headerBg);
-  doc.rect(0, y, W, tableHeaderH, 'F');
-  doc.setFontSize(5.5); doc.setFont('helvetica','bold'); doc.setTextColor(...p.textMuted);
-
-  // Column positions — 6 columns now
-  const cEx = M + 1;
-  const cSr = M + 42;
-  const cRp = M + 55;
-  const cCg = M + 68;
-  const cTt = M + 83;
-  const cTd = M + 98;
-
-  y += 5.5;
-  doc.text('EJERCICIO', cEx, y);
-  doc.text('SER', cSr, y, {align:'center'});
-  doc.text('REP', cRp, y, {align:'center'});
-  doc.text('KG',  cCg, y, {align:'center'});
-  doc.text('TRAB', cTt, y, {align:'center'});
-  doc.text('DESC', cTd, y, {align:'center'});
-
-  // ── ROWS ──
-  y += 3;
-  ejercicios.forEach((ex, i) => {
-    doc.setFillColor(...(i%2===0 ? p.rowEven : p.rowOdd));
-    doc.rect(0, y, W, rH, 'F');
-
-    doc.setFillColor(...p.headerBg);
-    doc.roundedRect(M, y + 2, 5.5, 5.5, 1, 1, 'F');
-    doc.setFontSize(5); doc.setFont('helvetica','bold'); doc.setTextColor(...p.textMuted);
-    doc.text(String(i+1), M + 2.75, y + 5.8, {align:'center'});
-
-    const maxChars = 20;
-    const exName = ex.e.length > maxChars ? ex.e.slice(0, maxChars) + '…' : ex.e;
-    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...p.textMain);
-    doc.text(exName, M + 8, y + 5);
-
-    doc.setFontSize(5); doc.setFont('helvetica','normal'); doc.setTextColor(...p.textSub);
-    doc.text(ex.m.toLowerCase(), M + 8, y + 9);
-
-    doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.setTextColor(p.accentR, p.accentG, p.accentB);
-    doc.text(String(ex.sr), cSr, y + 7, {align:'center'});
-
-    doc.setTextColor(...p.textMain);
-    doc.text(ex.r > 0 ? String(ex.r) : '—', cRp, y + 7, {align:'center'});
-    doc.text(ex.c > 0 ? String(ex.c) : '—', cCg, y + 7, {align:'center'});
-
-    doc.setFontSize(6.5);
-    doc.text(ex.tt || '—', cTt, y + 7, {align:'center'});
-    doc.text(ex.td || '—', cTd, y + 7, {align:'center'});
-
-    y += rH;
-  });
-
-  // ── FOOTER ──
-  y += 2;
-  doc.setDrawColor(...p.headerBg); doc.setLineWidth(0.2);
-  doc.line(M, y, W - M, y);
-  y += 4;
-  doc.setFontSize(5.5); doc.setFont('helvetica','normal'); doc.setTextColor(...p.footerC);
-  doc.text('Training Cards · Ariel Stamile', M, y);
-  doc.text(`${ejercicios.length} ejercicios`, W - M, y, {align:'right'});
-
-  doc.save(`${selAlumno}_S${selSemana}_D${selDia}.pdf`);
-}
-
-// ── VIEW SWITCHER ────────────────────────────────────────────────────────
-let currentView = 'cards';
-
-function switchView(view) {
-  currentView = view;
-  const btnCards   = document.getElementById('btn-cards');
-  const btnPlanner = document.getElementById('btn-planner');
-  const cardArea   = document.getElementById('card-area');
-  const planArea   = document.getElementById('planner-area');
-
-  if (view === 'cards') {
-    btnCards.style.background   = '#c8f135';
-    btnCards.style.color        = '#111';
-    btnCards.style.borderColor  = '#c8f135';
-    btnPlanner.style.background = 'transparent';
-    btnPlanner.style.color      = '#666';
-    btnPlanner.style.borderColor= '#2e2e2e';
-    cardArea.style.display  = 'block';
-    planArea.style.display  = 'none';
-  } else {
-    btnPlanner.style.background = '#c8f135';
-    btnPlanner.style.color      = '#111';
-    btnPlanner.style.borderColor= '#c8f135';
-    btnCards.style.background   = 'transparent';
-    btnCards.style.color        = '#666';
-    btnCards.style.borderColor  = '#2e2e2e';
-    cardArea.style.display  = 'none';
-    planArea.style.display  = 'block';
-    renderPlanner();
-  }
-}
-
-function renderPlanner() {
-  const area = document.getElementById('planner-area');
-  if (!selAlumno || !DB[selAlumno]) {
-    area.innerHTML = '<div class="empty">Seleccioná un alumno para ver su planificación</div>';
-    return;
-  }
-
-  const t    = getTheme(DB[selAlumno].objetivo);
-  const rows = DB[selAlumno].rows;
-  const sesionesList = DB[selAlumno].sesiones || [];
-
-  // Group by mes → semana → dia — incluir TANTO ejercicios como sesiones vacías
-  const meses = {};
-  // Primero las sesiones (incluye vacías)
-  sesionesList.forEach(r => {
-    const mes = r.mes || 1;
-    if (!meses[mes]) meses[mes] = {};
-    if (!meses[mes][r.s]) meses[mes][r.s] = new Set();
-    // Solo marcar como "con datos" si tiene ejercicios
-    // Registrar la sesion para que aparezca el día
-    if (!meses[mes][r.s]._dias) meses[mes][r.s]._dias = new Set();
-    meses[mes][r.s]._dias.add(r.d);
-  });
-  // Luego los rows con ejercicios (marcar días como con datos)
-  rows.forEach(r => {
-    const mes = r.mes || 1;
-    if (!meses[mes]) meses[mes] = {};
-    if (!meses[mes][r.s]) meses[mes][r.s] = new Set();
-    meses[mes][r.s].add(r.d);
-    if (!meses[mes][r.s]._dias) meses[mes][r.s]._dias = new Set();
-    meses[mes][r.s]._dias.add(r.d);
-  });
-
-  // Get max dias across all sesiones and rows
-  const allDias = [...rows.map(r=>r.d), ...sesionesList.map(r=>r.d)];
-  const maxDias = allDias.length > 0 ? Math.max(...allDias) : 4;
-
-  const totalSemanas = Object.values(meses).reduce((acc, sem) => acc + Object.keys(sem).length, 0);
-  const totalEjercicios = rows.length;
-
-  area.innerHTML = `
-    <div class="planner">
-      <div class="planner-header">
-        <div>
-          <div class="planner-title" style="color:${t.text}">${selAlumno}</div>
-          <div class="planner-meta" style="color:${t.text2}">${Object.keys(meses).length} meses · ${totalSemanas} semanas · ${totalEjercicios} ejercicios</div>
-        </div>
-      </div>
-      ${Object.keys(meses).sort((a,b)=>a-b).map(mes => `
-        <div class="month-block">
-          <div class="month-label">
-            <span>Mes ${mes}</span>
-            <span title="Borrar mes completo" onclick="event.stopPropagation();borrarMes(${mes})"
-              style="display:inline-flex;align-items:center;gap:4px;background:#fff0f0;border:1px solid #fecaca;color:#e05555;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:none;transition:all .15s"
-              onmouseover="this.style.background='#fecaca'"
-              onmouseout="this.style.background='#fff0f0'">🗑 Borrar mes</span>
-          </div>
-          ${Object.keys(meses[mes]).sort((a,b)=>a-b).map(sem => {
-            const diasConEjercicios = meses[mes][sem];          // días con ejercicios
-            const todosLosDias = meses[mes][sem]._dias || new Set(); // todos los días (incluso vacíos)
-            const diasHtml = [...todosLosDias].sort((a,b)=>a-b).map(d => {
-              const hasData = diasConEjercicios.has(d);
-              const isSelected = selSemana === parseInt(sem) && selDia === d;
-              // Todos los días tienen lápiz (para agregar o editar)
-              return `<div style="display:flex;align-items:center;gap:2px">
-                <div class="day-chip ${hasData?'has-data':'no-data'}${isSelected?' selected':''}"
-                  onclick="selectFromPlanner(${sem},${d})"
-                  >D${d}</div>
-                <div title="Editar día" onclick="event.stopPropagation();editarDia(${sem},${d})"
-                  style="width:20px;height:20px;border-radius:4px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;flex-shrink:0"
-                  onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
-                  onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">✏️</div>
-                ${hasData ? `<div title="Copiar día" onclick="event.stopPropagation();abrirCopyDiaModal(${sem},${d})"
-                  style="width:20px;height:20px;border-radius:4px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;flex-shrink:0"
-                  onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
-                  onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">⧉</div>` : ''}
-                <div title="Borrar día" onclick="event.stopPropagation();borrarDia(${sem},${d})"
-                  style="width:20px;height:20px;border-radius:4px;background:#fff0f0;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;font-weight:700;color:#e05555;transition:all .15s;flex-shrink:0"
-                  onmouseover="this.style.background='#fecaca'"
-                  onmouseout="this.style.background='#fff0f0'">×</div>
-              </div>`;
-            }).join('');
-            const totalEx = rows.filter(r => r.s===parseInt(sem)).length;
-            return `
-              <div class="week-row ${selSemana===parseInt(sem)?'active-week':''}" style="border-color:${selSemana===parseInt(sem)?t.accent:'#e8e4de'}" onclick="selectSemanaFromPlanner(${sem})">
-                <div class="week-label" style="color:${t.text}">S${sem}</div>
-                <div class="day-chips" onclick="event.stopPropagation()">${diasHtml}</div>
-                <div class="week-count" style="color:${t.text2}">${totalEx} ej.</div>
-                ${totalEx > 0 ? `<div title="Copiar semana" onclick="event.stopPropagation();abrirCopyModal(${sem})"
-                  style="width:26px;height:26px;border-radius:6px;background:#f0ede8;border:1px solid #e8dfc8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;flex-shrink:0;transition:all .15s"
-                  onmouseover="this.style.background='#c8a45a';this.style.borderColor='#c8a45a'"
-                  onmouseout="this.style.background='#f0ede8';this.style.borderColor='#e8dfc8'">⧉</div>` : ''}
-                <div title="Borrar semana" onclick="event.stopPropagation();borrarSemana(${sem})"
-                  style="width:26px;height:26px;border-radius:6px;background:#fff0f0;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;color:#e05555;flex-shrink:0;transition:all .15s"
-                  onmouseover="this.style.background='#fecaca'"
-                  onmouseout="this.style.background='#fff0f0'">×</div>
-              </div>`;
-          }).join('')}
-        </div>
-      `).join('')}
-    </div>`;
-}
-
-function scrollSidebarToActive() {
-  // Scroll active week button into view in sidebar
-  const activeWeek = document.querySelector('#week-filters .filter-btn.active');
-  if (activeWeek) activeWeek.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-  const activeDay = document.querySelector('#day-filters .filter-btn.active');
-  if (activeDay) activeDay.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-}
-
-function selectSemanaFromPlanner(sem) {
-  selSemana = parseInt(sem);
-  const dias = getDias(selAlumno, selSemana);
-  selDia = dias.includes(selDia) ? selDia : dias[0];
-  renderSidebar();
-  renderCard();
-  renderPlanner();
-  setTimeout(scrollSidebarToActive, 50);
-}
-
-function selectFromPlanner(sem, dia) {
-  selSemana = parseInt(sem);
-  selDia    = dia;
-  renderSidebar();
-  renderCard();
-  renderPlanner();
-  setTimeout(scrollSidebarToActive, 50);
-}
-
-function editarDia(sem, dia) {
-  if (!selAlumno || !DB[selAlumno]) return;
-  const alumnoId = DB[selAlumno].alumno_id;
-  const row = DB[selAlumno].rows.find(r => r.s === parseInt(sem) && r.d === dia);
-  const ses = (DB[selAlumno].sesiones||[]).find(r => r.s === parseInt(sem) && r.d === dia);
-  const sesionId = (row && row.sesion_id) || (ses && ses.id);
-  if (!sesionId) {
-    alert('No se encontró la sesión. Intentá recargar la página.');
-    return;
-  }
-  sessionStorage.setItem('tc_alumno', selAlumno);
-  sessionStorage.setItem('tc_semana', selSemana);
-  sessionStorage.setItem('tc_dia',    selDia);
-  window.location.href = `editar-alumno.html?alumno_id=${alumnoId}&sesion_id=${sesionId}`;
-}
-
-
-// ── COPY DAY ──────────────────────────────────────────────────────────────
-let copyDiaSrcSem = null;
-let copyDiaSrcDia = null;
-let copyDiaSelected = new Set();
-
-function abrirCopyDiaModal(sem, dia) {
-  if (!selAlumno || !DB[selAlumno]) return;
-  copyDiaSrcSem = parseInt(sem);
-  copyDiaSrcDia = parseInt(dia);
-  copyDiaSelected = new Set();
-
-  document.getElementById('copy-dia-modal-src').textContent = `S${sem} · D${dia}`;
-  document.getElementById('copy-dia-modal-warn').style.display = 'none';
-  document.getElementById('copy-dia-modal-confirm').disabled = true;
-
-  const sems = getSemanas(selAlumno);
-  const grid = document.getElementById('copy-dia-modal-semanas');
-  grid.innerHTML = sems.map(s => {
-    const hasThisDay = (DB[selAlumno].rows||[]).some(r => r.s===s && r.d===copyDiaSrcDia);
-    const isSrc = s === copyDiaSrcSem;
-    return `<button onclick="toggleCopyDiaSem(${s})" id="cdm-${s}"
-      style="padding:8px 14px;border-radius:8px;border:1.5px solid ${isSrc?'#c4bdb5':'#e8e4de'};
-      background:${isSrc?'#f0ede8':'#fff'};color:${isSrc?'#c4bdb5':'#1a1714'};
-      font-size:12px;font-weight:700;cursor:${isSrc?'not-allowed':'pointer'};font-family:inherit"
-      ${isSrc?'disabled':''}>
-      S${s}${hasThisDay?' ·':''}
-    </button>`;
-  }).join('');
-
-  document.getElementById('copy-dia-modal').style.display = 'flex';
-}
-
-function toggleCopyDiaSem(s) {
-  if (s === copyDiaSrcSem) return;
-  if (copyDiaSelected.has(s)) {
-    copyDiaSelected.delete(s);
-    document.getElementById('cdm-' + s).style.background = '#fff';
-    document.getElementById('cdm-' + s).style.borderColor = '#e8e4de';
-    document.getElementById('cdm-' + s).style.color = '#1a1714';
-  } else {
-    copyDiaSelected.add(s);
-    document.getElementById('cdm-' + s).style.background = '#c8a45a';
-    document.getElementById('cdm-' + s).style.borderColor = '#c8a45a';
-    document.getElementById('cdm-' + s).style.color = '#fff';
-  }
-  const hasOverwrite = [...copyDiaSelected].some(s =>
-    (DB[selAlumno].rows||[]).some(r => r.s===s && r.d===copyDiaSrcDia)
-  );
-  document.getElementById('copy-dia-modal-warn').style.display = hasOverwrite ? 'block' : 'none';
-  document.getElementById('copy-dia-modal-confirm').disabled = copyDiaSelected.size === 0;
-}
-
-function closeCopyDiaModal() {
-  document.getElementById('copy-dia-modal').style.display = 'none';
-  copyDiaSelected = new Set();
-}
-
-async function confirmarCopiaDia() {
-  if (!copyDiaSrcSem || !copyDiaSrcDia || copyDiaSelected.size === 0) return;
-
-  const btn = document.getElementById('copy-dia-modal-confirm');
-  btn.textContent = 'Copiando...';
-  btn.disabled = true;
-
-  const rows     = DB[selAlumno].rows;
-  const alumnoId = DB[selAlumno].alumno_id;
-  const srcRows  = rows.filter(r => r.s === copyDiaSrcSem && r.d === copyDiaSrcDia).sort((a,b) => a.orden - b.orden);
-
-  try {
-    for (const destSem of copyDiaSelected) {
-      // 1. Get sesion_id for destSem + dia, or create it
-      const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${destSem}&dia=eq.${copyDiaSrcDia}&select=id`, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-      const existing = await checkRes.json();
-      let destSesionId;
-
-      if (existing.length > 0) {
-        destSesionId = existing[0].id;
-        // Delete existing exercises
-        await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${destSesionId}`, {
-          method: 'DELETE',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
-        });
-      } else {
-        const srcSesion = rows.find(r => r.s === copyDiaSrcSem && r.d === copyDiaSrcDia);
-        const createRes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-          body: JSON.stringify({ alumno_id: alumnoId, semana: destSem, dia: copyDiaSrcDia, mes: Math.ceil(destSem/4) })
-        });
-        const created = await createRes.json();
-        destSesionId = created[0].id;
-      }
-
-      // 2. Insert exercises
-      const toInsert = srcRows.map((r, i) => ({
-        sesion_id:       destSesionId,
-        alumno_id:       alumnoId,
-        grupo_muscular:  r.m,
-        ejercicio:       r.e,
-        series:          r.sr,
-        reps:            r.r,
-        carga:           r.c,
-        tiempo_trabajo:  r.tt || null,
-        tiempo_descanso: r.td || null,
-        orden:           i + 1
-      }));
-
-      await fetch(`${SUPABASE_URL}/rest/v1/ejercicios`, {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(toInsert)
-      });
-    }
-
-    sessionStorage.setItem('tc_alumno', selAlumno);
-    sessionStorage.setItem('tc_semana', selSemana);
-    sessionStorage.setItem('tc_dia', selDia);
-    sessionStorage.setItem('tc_view', 'planner');
-    await loadFromSupabase();
-    closeCopyDiaModal();
-
-  } catch(e) {
-    btn.textContent = 'Copiar';
-    btn.disabled = false;
-    alert('Error: ' + e.message);
-  }
-}
-
-// ── COPY WEEK ─────────────────────────────────────────────────────────────
-let copySrcSem = null;
-let copySelected = new Set();
-
-function abrirCopyModal(sem) {
-  if (!selAlumno || !DB[selAlumno]) return;
-  copySrcSem  = parseInt(sem);
-  copySelected = new Set();
-
-  const rows      = DB[selAlumno].rows;
-  const allSems   = [...new Set(rows.map(r => r.s))].sort((a,b) => a-b);
-  const semsConData = new Set(allSems);
-
-  document.getElementById('copy-modal-src').textContent = `S${sem}`;
-  document.getElementById('copy-modal-warn').style.display = 'none';
-  document.getElementById('copy-modal-confirm').disabled = true;
-
-  const grid = document.getElementById('copy-modal-semanas');
-  grid.innerHTML = allSems
-    .filter(s => s !== copySrcSem)
-    .map(s => {
-      const hasData = semsConData.has(s);
-      return `<button class="modal-sem-btn${hasData?' has-data':''}" id="csem-${s}"
-        onclick="toggleCopySem(${s},${hasData})">${s < 10 ? 'S0'+s : 'S'+s}</button>`;
-    }).join('');
-
-  document.getElementById('copy-modal').style.display = 'flex';
-}
-
-function toggleCopySem(s, hasData) {
-  if (copySelected.has(s)) {
-    copySelected.delete(s);
-    document.getElementById(`csem-${s}`).classList.remove('selected');
-  } else {
-    copySelected.add(s);
-    document.getElementById(`csem-${s}`).classList.add('selected');
-  }
-  // Warn if any selected has data
-  const rows = DB[selAlumno].rows;
-  const semsConData = new Set(rows.map(r => r.s));
-  const warn = [...copySelected].some(s => semsConData.has(s));
-  document.getElementById('copy-modal-warn').style.display = warn ? 'block' : 'none';
-  document.getElementById('copy-modal-confirm').disabled = copySelected.size === 0;
-}
-
-function closeCopyModal() {
-  document.getElementById('copy-modal').style.display = 'none';
-  copySrcSem = null;
-  copySelected = new Set();
-}
-
-async function confirmarCopia() {
-  if (!copySrcSem || copySelected.size === 0) return;
-
-  const btn = document.getElementById('copy-modal-confirm');
-  btn.textContent = 'Copiando...';
-  btn.disabled = true;
-
-  const rows    = DB[selAlumno].rows;
-  const alumnoId = DB[selAlumno].alumno_id;
-
-  // Get source exercises per day (using sesion_id)
-  // Group source rows by dia
-  const srcRows = rows.filter(r => r.s === copySrcSem);
-  const diasSrc = [...new Set(srcRows.map(r => r.d))].sort((a,b) => a-b);
-
-  try {
-    for (const destSem of copySelected) {
-      // 1. Delete existing exercises in dest semana (via sesiones JOIN)
-      // Get sesion_ids for destSem
-      const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${destSem}&select=id`, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-      const sesiones = await resSes.json();
-      for (const ses of sesiones) {
-        await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=eq.${ses.id}`, {
-          method: 'DELETE',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // 2. For each day in source, get or create sesion in dest, then insert exercises
-      for (const dia of diasSrc) {
-        const srcDiaRows = srcRows.filter(r => r.d === dia);
-        if (!srcDiaRows.length) continue;
-
-        // Get or create sesion for destSem + dia
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${destSem}&dia=eq.${dia}&select=id`, {
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        const existing = await checkRes.json();
-        let destSesionId;
-
-        if (existing.length > 0) {
-          destSesionId = existing[0].id;
-        } else {
-          // Create new sesion — get mes from source
-          const srcSesion = rows.find(r => r.s === copySrcSem && r.d === dia);
-          const createRes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
-            method: 'POST',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-            body: JSON.stringify({ alumno_id: alumnoId, semana: destSem, dia, mes: srcSesion?.mes || 1 })
-          });
-          const created = await createRes.json();
-          destSesionId = created[0].id;
-        }
-
-        // Insert exercises
-        const ejerciciosToInsert = srcDiaRows.map(r => ({
-          sesion_id:      destSesionId,
-          alumno_id:      alumnoId,
-          grupo_muscular: r.m,
-          ejercicio:      r.e,
-          series:         r.sr,
-          reps:           r.r,
-          carga:          r.c,
-          tiempo_trabajo: r.tt || null,
-          tiempo_descanso: r.td || null
-        }));
-
-        await fetch(`${SUPABASE_URL}/rest/v1/ejercicios`, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-          body: JSON.stringify(ejerciciosToInsert)
-        });
-      }
-    }
-
-    closeCopyModal();
-    // Reload data to reflect changes
-    await loadFromSupabase();
-
-  } catch(e) {
-    btn.textContent = 'Error: ' + e.message;
-    btn.style.background = '#dc2626';
-    setTimeout(() => {
-      btn.textContent = 'Copiar';
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 3000);
-  }
-}
-
-
-// ── EDIT EXERCISE MODAL ──────────────────────────────────────────────────
-let editingEx = null;
-
-function openEditModalByIndex(idx) {
-  const ex = DB[selAlumno].rows.filter(r=>r.s===selSemana&&r.d===selDia).sort((a,b)=>a.orden-b.orden)[idx];
-  openEditModal(ex);
-}
-
-function openEditModal(ex) {
-  editingEx = ex;
-  document.getElementById('edit-modal-title').textContent = ex.e;
-  document.getElementById('edit-modal-sub').textContent   = ex.m ? ex.m.toLowerCase() : '';
-  document.getElementById('edit-series').value = ex.sr || '';
-  document.getElementById('edit-reps').value   = ex.r  || '';
-  document.getElementById('edit-carga').value  = ex.c  || '';
-  document.getElementById('edit-rm').value     = ex.rm || '';
-  document.getElementById('edit-tt').value     = ex.tt || '';
-  document.getElementById('edit-td').value     = ex.td || '';
-  document.getElementById('edit-rm-pct').value = 75;
-  document.getElementById('rm-pct-label').textContent = '75%';
-  document.getElementById('rm-result').innerHTML = 'Carga calculada: <strong>—</strong>';
-  document.getElementById('edit-modal-status').className = 'edit-modal-status';
-  document.getElementById('edit-modal-status').textContent = '';
-  setCargaMode('kg');
-  document.getElementById('edit-ex-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('edit-series').focus(), 100);
-}
-
-function closeEditModal() {
-  document.getElementById('edit-ex-modal').style.display = 'none';
-  editingEx = null;
-}
-
-function stepVal(id, delta) {
-  const el = document.getElementById(id);
-  const val = parseFloat(el.value) || 0;
-  const step = parseFloat(el.step) || 1;
-  el.value = Math.max(parseFloat(el.min)||0, val + delta);
-  if (id === 'edit-rm') calcCargaRM();
-}
-
-function incCarga(delta) {
-  const el = document.getElementById('edit-carga');
-  el.value = Math.max(0, (parseFloat(el.value)||0) + delta);
-}
-
-function setCargaMode(mode) {
-  const isKg = mode === 'kg';
-  document.getElementById('mode-kg').classList.toggle('active', isKg);
-  document.getElementById('mode-rm').classList.toggle('active', !isKg);
-  document.getElementById('carga-kg-section').style.display = isKg ? 'block' : 'none';
-  document.getElementById('carga-rm-section').style.display = isKg ? 'none' : 'block';
-  if (!isKg) calcCargaRM();
-}
-
-function calcCargaRM() {
-  const rm  = parseFloat(document.getElementById('edit-rm').value) || 0;
-  const pct = parseFloat(document.getElementById('edit-rm-pct').value) || 75;
-  document.getElementById('rm-pct-label').textContent = pct + '%';
-  if (rm > 0) {
-    const carga = Math.round((rm * pct / 100) * 4) / 4; // round to 0.25
-    document.getElementById('rm-result').innerHTML = `Carga calculada: <strong>${carga} kg</strong>`;
-    document.getElementById('edit-carga').value = carga;
-  } else {
-    document.getElementById('rm-result').innerHTML = 'Carga calculada: <strong>—</strong>';
-  }
-}
-
-async function saveEditModal() {
-  if (!editingEx) return;
-  const series = parseFloat(document.getElementById('edit-series').value) || 0;
-  const reps   = parseFloat(document.getElementById('edit-reps').value)   || 0;
-  const carga  = parseFloat(document.getElementById('edit-carga').value)  || 0;
-  const rm     = parseFloat(document.getElementById('edit-rm').value)     || null;
-  const tt     = document.getElementById('edit-tt').value.trim();
-  const td     = document.getElementById('edit-td').value.trim();
-  const status = document.getElementById('edit-modal-status');
-  const btn    = document.querySelector('.edit-modal-save');
-
-  btn.textContent = 'Guardando...';
-  btn.disabled = true;
-
-  try {
-    const body = { series, reps, carga, tiempo_trabajo: tt || null, tiempo_descanso: td || null };
-    if (rm !== null) body.rm = rm;
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${editingEx.id}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(body)
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        sesion_id: sesionId,
+        alumno_id: currentAlumnoId,
+        grupo_muscular: grupo,
+        ejercicio: nombre,
+        series, reps, carga,
+        tiempo_trabajo: tt || null,
+        tiempo_descanso: td || null
+      })
     });
     if (!res.ok) throw new Error(await res.text());
 
-    // Update local DB
-    const row = DB[selAlumno].rows.find(r => r.id === editingEx.id);
-    if (row) { row.sr = series; row.r = reps; row.c = carga; row.rm = rm; row.tt = tt; row.td = td; }
+    // Agregar a lista local
+    if (!currentExercicios[sesionId]) currentExercicios[sesionId] = [];
+    currentExercicios[sesionId].push({grupo_muscular: grupo, ejercicio: nombre, series, reps, carga, tiempo_trabajo: tt || null, tiempo_descanso: td || null});
+    renderExList(sesionId, currentExercicios[sesionId]);
 
-    status.className = 'edit-modal-status success';
-    status.textContent = '✓ Guardado';
-    renderCard();
-    setTimeout(() => closeEditModal(), 800);
+    // Limpiar campos
+    document.getElementById('ej-nombre').value = '';
+    document.getElementById('ej-series').value = '';
+    document.getElementById('ej-reps').value   = '';
+    document.getElementById('ej-carga').value  = '';
+    document.getElementById('ej-tt').value     = '';
+    document.getElementById('ej-td').value     = '';
+    document.getElementById('ej-grupo').focus();
 
-  } catch(e) {
-    status.className = 'edit-modal-status error';
-    status.textContent = 'Error: ' + e.message;
-  } finally {
-    btn.textContent = 'Guardar';
-    btn.disabled = false;
-  }
-}
-
-async function deleteExFromModal() {
-  if (!editingEx) return;
-  const status = document.getElementById('edit-modal-status');
-  const btn = document.querySelector('.edit-modal-delete');
-  btn.textContent = '...';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${editingEx.id}`, {
-      method: 'DELETE',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      }
-    });
-    if (!res.ok) throw new Error(await res.text());
-
-    // Remove from local DB
-    DB[selAlumno].rows = DB[selAlumno].rows.filter(r => r.id !== editingEx.id);
-    closeEditModal();
-    renderCard();
+    showStatus(status, 'success', `✓ ${nombre} agregado.`);
+    setTimeout(() => status.style.display = 'none', 2000);
 
   } catch(e) {
-    status.className = 'edit-modal-status error';
-    status.textContent = 'Error: ' + e.message;
-    btn.textContent = '🗑';
-    btn.disabled = false;
+    showStatus(status, 'error', 'Error: ' + e.message);
   }
 }
 
-
-// ── EXTENDER PLANIFICACIÓN ───────────────────────────────────────────────
-// ── EXTEND MODAL STATE ────────────────────────────────────────────────────
-let extendSemanasCount = 0;
-// { dia: Set<semana> } — qué semanas tiene asignadas cada día seleccionado
-let extendDiasMap = {};
-
-function abrirExtenderModal() {
-  if (!selAlumno || !DB[selAlumno]) return;
-  extendSemanasCount = 0;
-  extendDiasMap = {};
-
-  const sems = getSemanas(selAlumno);
-  const maxSem = Math.max(...sems);
-
-  document.getElementById('extend-modal-sub').textContent =
-    `${selAlumno} · ${sems.length} semanas · hasta S${maxSem}`;
-
-  document.getElementById('extend-count').textContent = '0';
-  updateExtendPreview();
-  renderExtendDiasSection();
-  document.getElementById('extend-status').style.display = 'none';
-  document.getElementById('extend-modal').style.display = 'flex';
+async function eliminarEjercicio(sesionId, idx) {
+  currentExercicios[sesionId].splice(idx, 1);
+  renderExList(sesionId, currentExercicios[sesionId] || []);
 }
 
-function cerrarExtenderModal() {
-  document.getElementById('extend-modal').style.display = 'none';
+// ── HELPERS ───────────────────────────────────────────────────────────
+function showStatus(el, type, msg) {
+  el.className = `status-msg ${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
 }
 
-function cambiarSemanas(delta) {
-  extendSemanasCount = Math.max(0, Math.min(12, extendSemanasCount + delta));
-  document.getElementById('extend-count').textContent = extendSemanasCount;
-  updateExtendPreview();
+function setStepDone(n) {
+  const tab = document.getElementById(`step-tab-${n}`);
+  tab.classList.remove('active');
+  tab.classList.add('done');
+  tab.querySelector('.step-num').textContent = '✓';
 }
 
-function updateExtendPreview() {
-  const sems = getSemanas(selAlumno);
-  const maxSem = Math.max(...sems);
-  const el = document.getElementById('extend-preview');
-  if (extendSemanasCount === 0) {
-    el.textContent = 'No se agregarán semanas nuevas';
-  } else {
-    const desde = maxSem + 1;
-    const hasta = maxSem + extendSemanasCount;
-    el.textContent = `Se generarán S${desde} a S${hasta} (${extendSemanasCount} semana${extendSemanasCount !== 1 ? 's' : ''} vacías)`;
-  }
+function setStepActive(n) {
+  document.getElementById(`step-tab-${n}`).classList.add('active');
 }
-
-function renderExtendDiasSection() {
-  const dias = [1,2,3,4,5,6,7];
-  const sems = getSemanas(selAlumno);
-
-  const html = dias.map(d => {
-    const selected = extendDiasMap[d] !== undefined;
-    const assignedSems = extendDiasMap[d] || new Set();
-
-    const semGrid = selected ? `
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
-        ${sems.map(s => {
-          const on = assignedSems.has(s);
-          // Check if this semana already has this dia
-          const exists = (DB[selAlumno].sesiones||[]).some(r => r.s===s && r.d===d);
-          return `<button onclick="toggleExtendSemForDia(${d},${s})"
-            style="padding:5px 10px;border-radius:7px;border:1.5px solid ${on?'#c8a45a':'#e8e4de'};
-            background:${on?'#c8a45a':'#fff'};color:${on?'#fff':exists?'#c4bdb5':'#1a1714'};
-            font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;
-            position:relative"
-            title="${exists?'Ya existe este día en esta semana':''}">
-            S${s}${exists?' ·':''}
-          </button>`;
-        }).join('')}
-      </div>` : '';
-
-    return `<div style="margin-bottom:${selected?'12px':'4px'};padding:${selected?'10px':'6px 10px'};
-      border-radius:8px;border:1.5px solid ${selected?'#c8a45a':'#e8e4de'};
-      background:${selected?'#fdf8f0':'#fff'};transition:all .15s">
-      <div style="display:flex;align-items:center;gap:8px">
-        <button onclick="toggleExtendDia(${d})"
-          style="padding:6px 14px;border-radius:7px;border:1.5px solid ${selected?'#c8a45a':'#e8e4de'};
-          background:${selected?'#c8a45a':'#fff'};color:${selected?'#fff':'#1a1714'};
-          font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;flex-shrink:0">
-          D${d}
-        </button>
-        ${selected
-          ? `<span style="font-size:11px;color:#8a8278">${assignedSems.size > 0
-              ? `${assignedSems.size} semana${assignedSems.size!==1?'s':''} seleccionada${assignedSems.size!==1?'s':''}`
-              : 'Elegí las semanas →'}</span>`
-          : `<span style="font-size:11px;color:#c4bdb5">sin asignar</span>`}
-      </div>
-      ${semGrid}
-    </div>`;
-  }).join('');
-
-  document.getElementById('extend-dias').innerHTML = html;
-}
-
-function toggleExtendDia(d) {
-  if (extendDiasMap[d] !== undefined) {
-    delete extendDiasMap[d];
-  } else {
-    extendDiasMap[d] = new Set();
-  }
-  renderExtendDiasSection();
-}
-
-function toggleExtendSemForDia(d, s) {
-  if (!extendDiasMap[d]) extendDiasMap[d] = new Set();
-  if (extendDiasMap[d].has(s)) {
-    extendDiasMap[d].delete(s);
-  } else {
-    extendDiasMap[d].add(s);
-  }
-  renderExtendDiasSection();
-}
-
-async function confirmarExtender() {
-  if (!selAlumno || !DB[selAlumno]) return;
-  const btn    = document.getElementById('extend-confirm-btn');
-  const status = document.getElementById('extend-status');
-
-  // Validate: at least one action
-  const hasSemanas = extendSemanasCount > 0;
-  const diasEntries = Object.entries(extendDiasMap).filter(([d, sems]) => sems.size > 0);
-  const hasDias = diasEntries.length > 0;
-  if (!hasSemanas && !hasDias) {
-    status.className = 'status-msg error';
-    status.style.display = 'block';
-    status.textContent = 'Agregá semanas o asigná días a semanas existentes.';
-    return;
-  }
-
-  btn.textContent = 'Guardando...';
-  btn.disabled = true;
-  status.style.display = 'none';
-
-  const sems     = getSemanas(selAlumno);
-  const maxSem   = Math.max(...sems);
-  const alumnoId = DB[selAlumno].alumno_id;
-
-  try {
-    const sesionesToCreate = [];
-
-    // 1. Nuevas semanas vacías (con días por defecto sin asignar — se crean sin días,
-    //    el usuario luego agrega días sueltos o copia rutinas)
-    // Solo crear las semanas vacías — sin días predefinidos.
-    // Para que aparezcan en el planner necesitamos al menos 1 sesión por semana.
-    // Usamos dia=0 como placeholder... mejor: NO crear sesiones vacías, el planner
-    // ya soporta semanas sin días. En cambio creamos sesiones con los días que el alumno
-    // ya tiene actualmente (igual que antes), para que las semanas aparezcan útiles.
-    if (hasSemanas) {
-      const diasActuales = [...new Set(
-        (DB[selAlumno].sesiones||[]).map(r => r.d).filter(d => d > 0)
-      )].sort((a,b) => a-b);
-      // Si no tiene días previos, usar D1 como mínimo
-      const diasBase = diasActuales.length > 0 ? diasActuales : [1];
-      for (let s = maxSem + 1; s <= maxSem + extendSemanasCount; s++) {
-        const mes = Math.ceil(s / 4);
-        for (const dia of diasBase) {
-          sesionesToCreate.push({ alumno_id: alumnoId, semana: s, dia, mes });
-        }
-      }
-    }
-
-    // 2. Días sueltos en semanas existentes
-    if (hasDias) {
-      for (const [dStr, semsSet] of diasEntries) {
-        const dia = parseInt(dStr);
-        for (const s of semsSet) {
-          const mes = Math.ceil(s / 4);
-          sesionesToCreate.push({ alumno_id: alumnoId, semana: s, dia, mes });
-        }
-      }
-    }
-
-    if (sesionesToCreate.length > 0) {
-      // Filtrar las que ya existen en el estado local para evitar duplicate key
-      const existentes = new Set(
-        (DB[selAlumno].sesiones||[]).map(r => r.s + '_' + r.d)
-      );
-      const nuevas = sesionesToCreate.filter(s => !existentes.has(s.semana + '_' + s.dia));
-      if (nuevas.length > 0) {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/sesiones`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal,resolution=ignore-duplicates'
-          },
-          body: JSON.stringify(nuevas)
-        });
-        if (!res.ok) throw new Error(await res.text());
-      }
-    }
-
-    const partes = [];
-    if (hasSemanas) partes.push(`${extendSemanasCount} semana${extendSemanasCount!==1?'s':''} generada${extendSemanasCount!==1?'s':''}`);
-    if (hasDias) partes.push(`${diasEntries.reduce((acc,[,s])=>acc+s.size,0)} sesión/es de días asignada${diasEntries.reduce((acc,[,s])=>acc+s.size,0)!==1?'s':''}`);
-
-    status.className = 'status-msg success';
-    status.style.display = 'block';
-    status.textContent = '✓ ' + partes.join(' · ');
-    btn.textContent = 'Aplicar';
-    btn.disabled = false;
-
-    sessionStorage.setItem('tc_alumno', selAlumno);
-    sessionStorage.setItem('tc_semana', selSemana);
-    sessionStorage.setItem('tc_dia', selDia);
-    sessionStorage.setItem('tc_view', 'planner');
-    await loadFromSupabase();
-    cerrarExtenderModal();
-
-  } catch(e) {
-    status.className = 'status-msg error';
-    status.style.display = 'block';
-    status.textContent = 'Error: ' + e.message;
-    btn.textContent = 'Aplicar';
-    btn.disabled = false;
-  }
-}
-
-
-// ── BORRAR DÍA / SEMANA ──────────────────────────────────────────────────
-async function borrarDia(sem, dia) {
-  if (!confirm(`¿Borrar D${dia} de S${sem} y todos sus ejercicios?`)) return;
-  const alumnoId = DB[selAlumno].alumno_id;
-  const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
-
-  // Calculate destination BEFORE deleting (while DB still has all data)
-  const diasEnSem = getDias(selAlumno, parseInt(sem)).filter(d => d !== parseInt(dia));
-  let targetSem = parseInt(sem);
-  let targetDia;
-  if (diasEnSem.length > 0) {
-    // Closest previous day, or first available
-    const prevDias = diasEnSem.filter(d => d < parseInt(dia));
-    targetDia = prevDias.length > 0 ? prevDias[prevDias.length - 1] : diasEnSem[0];
-  } else {
-    // No more days — go to previous semana
-    const allSems = getSemanas(selAlumno);
-    const prevSems = allSems.filter(s => s < parseInt(sem));
-    targetSem = prevSems.length > 0 ? prevSems[prevSems.length - 1] : allSems.find(s => s !== parseInt(sem)) || parseInt(sem);
-    const prevDias = getDias(selAlumno, targetSem);
-    targetDia = prevDias[prevDias.length - 1] || prevDias[0] || 1;
-  }
-
-  try {
-    const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${sem}&dia=eq.${dia}&select=id`, { headers: hdrs });
-    if (!resSes.ok) throw new Error(`No se pudo leer la sesión D${dia} de S${sem}: ${await resSes.text()}`);
-    const sesiones = await resSes.json();
-
-    if (sesiones.length > 0) {
-      const idsList = sesiones.map(s => s.id).join(',');
-      const resEj = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=in.(${idsList})`, { method: 'DELETE', headers: hdrs });
-      if (!resEj.ok) throw new Error(`No se pudieron borrar los ejercicios de D${dia} S${sem}: ${await resEj.text()}`);
-      const resDel = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=in.(${idsList})`, { method: 'DELETE', headers: hdrs });
-      if (!resDel.ok) throw new Error(`No se pudo borrar la sesión D${dia} S${sem}: ${await resDel.text()}`);
-    }
-
-    sessionStorage.setItem('tc_alumno', selAlumno);
-    sessionStorage.setItem('tc_semana', targetSem);
-    sessionStorage.setItem('tc_dia', targetDia);
-    sessionStorage.setItem('tc_view', 'planner');
-    await loadFromSupabase();
-  } catch(e) {
-    alert('Error al borrar el día: ' + e.message);
-  }
-}
-
-async function borrarSemana(sem) {
-  if (!confirm(`¿Borrar la semana S${sem} completa con todos sus días y ejercicios?`)) return;
-  const alumnoId = DB[selAlumno].alumno_id;
-  const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
-
-  try {
-    const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&semana=eq.${sem}&select=id`, { headers: hdrs });
-    if (!resSes.ok) throw new Error(`No se pudieron leer las sesiones de S${sem}: ${await resSes.text()}`);
-    const sesiones = await resSes.json();
-
-    if (sesiones.length > 0) {
-      const idsList = sesiones.map(s => s.id).join(',');
-      // Borrar todos los ejercicios de esas sesiones en un solo request
-      const resEj = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=in.(${idsList})`, { method: 'DELETE', headers: hdrs });
-      if (!resEj.ok) throw new Error(`No se pudieron borrar los ejercicios de S${sem}: ${await resEj.text()}`);
-      // Borrar todas las sesiones en un solo request
-      const resDel = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=in.(${idsList})`, { method: 'DELETE', headers: hdrs });
-      if (!resDel.ok) throw new Error(`No se pudieron borrar las sesiones de S${sem}: ${await resDel.text()}`);
-    }
-
-    // Land on previous semana, last day
-    const semsRestantes = getSemanas(selAlumno).filter(s => s !== parseInt(sem));
-    const prevSems = semsRestantes.filter(s => s < parseInt(sem));
-    const targetSem = prevSems.length > 0
-      ? prevSems[prevSems.length - 1]
-      : (semsRestantes.length > 0 ? semsRestantes[0] : parseInt(sem));
-    const prevDias = getDias(selAlumno, targetSem);
-    const targetDia = prevDias[prevDias.length - 1] || prevDias[0];
-
-    sessionStorage.setItem('tc_alumno', selAlumno);
-    sessionStorage.setItem('tc_semana', targetSem);
-    sessionStorage.setItem('tc_dia', targetDia || 1);
-    sessionStorage.setItem('tc_view', 'planner');
-    await loadFromSupabase();
-  } catch(e) {
-    alert('Error al borrar la semana: ' + e.message);
-  }
-}
-
-async function borrarMes(mes) {
-  const semanasDelMes = getSemanas(selAlumno).filter(s => {
-    const sesionesDelAlumno = DB[selAlumno].sesiones || [];
-    const sesDeEstaSemana = sesionesDelAlumno.find(r => r.s === s);
-    return sesDeEstaSemana && sesDeEstaSemana.mes === parseInt(mes);
-  });
-
-  if (!semanasDelMes.length) {
-    alert(`No se encontraron semanas para el Mes ${mes}.`);
-    return;
-  }
-
-  if (!confirm(`¿Borrar el MES ${mes} completo? Se eliminarán las semanas ${semanasDelMes.join(', ')} con todos sus días y ejercicios. Esta acción no se puede deshacer.`)) return;
-
-  const alumnoId = DB[selAlumno].alumno_id;
-  const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
-
-  try {
-    const resSes = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?alumno_id=eq.${alumnoId}&mes=eq.${mes}&select=id`, { headers: hdrs });
-    if (!resSes.ok) throw new Error(`No se pudieron leer las sesiones del Mes ${mes}: ${await resSes.text()}`);
-    const sesiones = await resSes.json();
-
-    if (sesiones.length > 0) {
-      const idsList = sesiones.map(s => s.id).join(',');
-      const resEj = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?sesion_id=in.(${idsList})`, { method: 'DELETE', headers: hdrs });
-      if (!resEj.ok) throw new Error(`No se pudieron borrar los ejercicios del Mes ${mes}: ${await resEj.text()}`);
-      const resDel = await fetch(`${SUPABASE_URL}/rest/v1/sesiones?id=in.(${idsList})`, { method: 'DELETE', headers: hdrs });
-      if (!resDel.ok) throw new Error(`No se pudieron borrar las sesiones del Mes ${mes}: ${await resDel.text()}`);
-    }
-
-    // Land on the closest remaining mes/semana, or first available
-    const mesesRestantes = [...new Set((DB[selAlumno].sesiones||[]).filter(r => r.mes !== parseInt(mes)).map(r => r.mes))].sort((a,b)=>a-b);
-    let targetSem = null, targetDia = 1;
-    if (mesesRestantes.length > 0) {
-      const semsDelMesAnterior = getSemanas(selAlumno).filter(s => {
-        const ses = (DB[selAlumno].sesiones||[]).find(r => r.s === s);
-        return ses && ses.mes === mesesRestantes[mesesRestantes.length-1];
-      });
-      targetSem = semsDelMesAnterior[semsDelMesAnterior.length-1] || null;
-    }
-    if (targetSem) {
-      const dias = getDias(selAlumno, targetSem);
-      targetDia = dias[dias.length-1] || 1;
-    }
-
-    sessionStorage.setItem('tc_alumno', selAlumno);
-    if (targetSem) sessionStorage.setItem('tc_semana', targetSem);
-    sessionStorage.setItem('tc_dia', targetDia);
-    sessionStorage.setItem('tc_view', 'planner');
-    await loadFromSupabase();
-  } catch(e) {
-    alert('Error al borrar el mes: ' + e.message);
-  }
-}
-
-// INIT
-loadFromSupabase();
 </script>
-
-<!-- COPY WEEK MODAL -->
-<div id="copy-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeCopyModal()">
-  <div class="modal-box">
-    <div class="modal-title">Copiar semana <span id="copy-modal-src"></span></div>
-    <div class="modal-sub">Seleccioná las semanas destino</div>
-    <div id="copy-modal-warn" class="modal-warn">⚠️ Algunas semanas seleccionadas ya tienen ejercicios. Se sobreescribirán.</div>
-    <div id="copy-modal-semanas" class="modal-semanas"></div>
-    <div class="modal-actions">
-      <button class="modal-btn-cancel" onclick="closeCopyModal()">Cancelar</button>
-      <button class="modal-btn-confirm" id="copy-modal-confirm" onclick="confirmarCopia()" disabled>Copiar</button>
-    </div>
-  </div>
-</div>
-
-<!-- COPY DAY MODAL -->
-<div id="copy-dia-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeCopyDiaModal()">
-  <div class="modal-box">
-    <div class="modal-title">Copiar día <span id="copy-dia-modal-src"></span></div>
-    <div class="modal-sub">Seleccioná las semanas destino</div>
-    <div id="copy-dia-modal-warn" class="modal-warn">⚠️ Algunas semanas ya tienen este día. Se sobreescribirán.</div>
-    <div id="copy-dia-modal-semanas" class="modal-semanas"></div>
-    <div class="modal-actions">
-      <button class="modal-btn-cancel" onclick="closeCopyDiaModal()">Cancelar</button>
-      <button class="modal-btn-confirm" id="copy-dia-modal-confirm" onclick="confirmarCopiaDia()" disabled>Copiar</button>
-    </div>
-  </div>
-</div>
-
-<!-- EDIT EXERCISE MODAL -->
-<div id="edit-ex-modal" class="edit-modal-overlay" style="display:none" onclick="if(event.target===this)closeEditModal()">
-  <div class="edit-modal-box">
-    <div class="edit-modal-title" id="edit-modal-title">Editar ejercicio</div>
-    <div class="edit-modal-sub" id="edit-modal-sub"></div>
-
-    <!-- Series -->
-    <div class="edit-modal-field">
-      <label>Series</label>
-      <div class="stepper-row">
-        <button class="step-btn" onclick="stepVal('edit-series',-1)">−</button>
-        <input type="number" id="edit-series" min="1" max="20">
-        <button class="step-btn" onclick="stepVal('edit-series',1)">+</button>
-      </div>
-    </div>
-
-    <!-- Reps -->
-    <div class="edit-modal-field">
-      <label>Repeticiones</label>
-      <div class="stepper-row">
-        <button class="step-btn" onclick="stepVal('edit-reps',-1)">−</button>
-        <input type="number" id="edit-reps" min="1" max="100">
-        <button class="step-btn" onclick="stepVal('edit-reps',1)">+</button>
-      </div>
-    </div>
-
-    <!-- Carga -->
-    <div class="edit-modal-field">
-      <label>Carga</label>
-      <div class="carga-mode-toggle">
-        <button class="carga-mode-btn active" id="mode-kg" onclick="setCargaMode('kg')">Kg directo</button>
-        <button class="carga-mode-btn" id="mode-rm" onclick="setCargaMode('rm')">% del RM</button>
-      </div>
-
-      <!-- Modo Kg -->
-      <div id="carga-kg-section">
-        <div class="stepper-row">
-          <input type="number" id="edit-carga" min="0" step="0.5">
-        </div>
-        <div class="carga-increments">
-          <button class="inc-btn" onclick="incCarga(-20)">−20</button>
-          <button class="inc-btn" onclick="incCarga(-10)">−10</button>
-          <button class="inc-btn" onclick="incCarga(-5)">−5</button>
-          <button class="inc-btn" onclick="incCarga(-2.5)">−2.5</button>
-          <button class="inc-btn" onclick="incCarga(2.5)">+2.5</button>
-          <button class="inc-btn" onclick="incCarga(5)">+5</button>
-          <button class="inc-btn" onclick="incCarga(10)">+10</button>
-          <button class="inc-btn" onclick="incCarga(20)">+20</button>
-        </div>
-      </div>
-
-      <!-- Modo RM -->
-      <div id="carga-rm-section" style="display:none">
-        <div class="rm-section">
-          <label>RM del ejercicio (kg)</label>
-          <div class="stepper-row">
-            <button class="step-btn" onclick="stepVal('edit-rm',-2.5)">−</button>
-            <input type="number" id="edit-rm" min="0" step="2.5" placeholder="0" oninput="calcCargaRM()">
-            <button class="step-btn" onclick="stepVal('edit-rm',2.5)">+</button>
-          </div>
-          <div class="rm-pct-row">
-            <input type="range" id="edit-rm-pct" min="30" max="120" step="5" value="75" oninput="calcCargaRM()">
-            <div class="rm-pct-val" id="rm-pct-label">75%</div>
-          </div>
-          <div class="rm-result" id="rm-result">Carga calculada: <strong>—</strong></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tiempos -->
-    <div class="edit-modal-field">
-      <label>Tiempos</label>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="edit-tt" placeholder="T. Trabajo (ej: 40s)" style="flex:1;padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
-        <input type="text" id="edit-td" placeholder="T. Descanso (ej: 60s)" style="flex:1;padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
-      </div>
-    </div>
-
-    <div class="edit-modal-actions">
-      <button class="edit-modal-cancel" onclick="closeEditModal()">Cancelar</button>
-      <button class="edit-modal-delete" onclick="deleteExFromModal()" title="Eliminar ejercicio">🗑</button>
-      <button class="edit-modal-save" onclick="saveEditModal()">Guardar</button>
-    </div>
-    <div id="edit-modal-status" class="edit-modal-status"></div>
-  </div>
-</div>
-
-
-<!-- EXTEND MODAL -->
-<div id="extend-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)cerrarExtenderModal()">
-  <div class="modal-box" style="max-width:480px">
-    <div class="modal-title">Extender planificación</div>
-    <div class="modal-sub" id="extend-modal-sub"></div>
-
-    <!-- SECCIÓN 1: Agregar semanas -->
-    <div style="margin-bottom:20px;padding:14px;border-radius:10px;background:#faf8f5;border:1px solid #e8e4de">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#8a8278;margin-bottom:10px">Agregar semanas vacías</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button onclick="cambiarSemanas(-1)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">−</button>
-        <div id="extend-count" style="flex:1;text-align:center;font-size:28px;font-weight:800;color:#1a1714">0</div>
-        <button onclick="cambiarSemanas(1)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e8e4de;background:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">+</button>
-      </div>
-      <div id="extend-preview" style="font-size:12px;color:#8a8278;text-align:center;margin-top:8px"></div>
-    </div>
-
-    <!-- SECCIÓN 2: Agregar días a semanas existentes -->
-    <div style="margin-bottom:20px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#8a8278;margin-bottom:10px">Agregar días a semanas existentes</div>
-      <div id="extend-dias" style="display:flex;flex-direction:column;gap:6px"></div>
-    </div>
-
-    <div id="extend-status" class="status-msg" style="margin-bottom:12px;display:none"></div>
-    <div class="modal-actions">
-      <button class="modal-btn-cancel" onclick="cerrarExtenderModal()">Cancelar</button>
-      <button class="modal-btn-confirm" id="extend-confirm-btn" onclick="confirmarExtender()">Aplicar</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
