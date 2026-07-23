@@ -27,6 +27,21 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
 .info-badge:hover{background:#e0d9ce}
 .info-badge .cal-ic{font-size:10px;opacity:.6}
 
+.info-name-wrap{display:flex;align-items:center;gap:6px;cursor:pointer}
+.info-name-edit-ic{font-size:11px;opacity:.35;transition:opacity .15s}
+.info-name-wrap:hover .info-name-edit-ic{opacity:.7}
+.name-popover{position:absolute;top:calc(100% + 8px);left:0;background:#fff;border:1px solid #e8e4de;border-radius:14px;box-shadow:0 12px 32px rgba(26,23,20,.14);padding:16px;width:260px;z-index:100;display:none}
+.name-popover.open{display:block}
+.name-popover label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#8a8278;display:block;margin-bottom:6px}
+.name-popover input{width:100%;padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:14px;font-family:inherit;color:#1a1714;outline:none;transition:border .15s;margin-bottom:10px}
+.name-popover input:focus{border-color:#c8a45a}
+.name-popover-actions{display:flex;gap:8px}
+.name-popover-actions button{flex:1;padding:9px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-save-name{background:#1a1714;color:#fff}
+.btn-save-name:hover{background:#333}
+.btn-cancel-name{background:#f0ede8;color:#8a8278}
+.name-saving{font-size:11px;color:#c8a45a;font-weight:600;margin-top:2px;min-height:14px}
+
 /* Mini calendar popover */
 .cal-popover{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid #e8e4de;border-radius:14px;box-shadow:0 12px 32px rgba(26,23,20,.14);padding:16px;width:268px;z-index:100;display:none}
 .cal-popover.open{display:block}
@@ -301,9 +316,21 @@ function renderInfoBar() {
   document.getElementById('page-sub').textContent = `${alumnoData.nombre} — Sem ${sesionData.semana}, Día ${sesionData.dia}`;
   document.getElementById('info-bar').innerHTML = `
     <div class="info-avatar">${initials}</div>
-    <div>
-      <div class="info-name">${alumnoData.nombre}</div>
+    <div style="position:relative">
+      <div class="info-name-wrap" onclick="toggleNamePopover(event)" id="name-badge-btn">
+        <div class="info-name">${escapeAttr(alumnoData.nombre)}</div>
+        <span class="info-name-edit-ic">✎</span>
+      </div>
       <div class="info-meta" id="info-meta-fecha">${alumnoData.objetivo || ''} · ${sesionData.fecha || ''}</div>
+      <div class="name-popover" id="name-popover">
+        <label>Nombre del alumno</label>
+        <input type="text" id="name-input" value="${escapeAttr(alumnoData.nombre)}">
+        <div class="name-popover-actions">
+          <button class="btn-save-name" onclick="guardarNombre()">Guardar</button>
+          <button class="btn-cancel-name" onclick="closeNamePopover()">Cancelar</button>
+        </div>
+        <div class="name-saving" id="name-saving"></div>
+      </div>
     </div>
     <button class="info-badge" onclick="toggleCalendar(event)" id="badge-btn">
       <span class="cal-ic">📅</span>
@@ -320,8 +347,71 @@ function renderInfoBar() {
       <div class="cal-saving" id="cal-saving"></div>
     </div>
   `;
-  // close popover when clicking outside
+  // close popovers when clicking outside
   document.addEventListener('click', outsideCalendarClick);
+  document.addEventListener('click', outsideNamePopoverClick);
+}
+
+// ── EDITAR NOMBRE DEL ALUMNO ───────────────────────────────────────────
+function toggleNamePopover(e) {
+  e.stopPropagation();
+  const pop = document.getElementById('name-popover');
+  if (!pop) return;
+  const isOpen = pop.classList.contains('open');
+  // close calendar popover if open
+  document.getElementById('cal-popover')?.classList.remove('open');
+  if (isOpen) {
+    pop.classList.remove('open');
+    return;
+  }
+  const input = document.getElementById('name-input');
+  input.value = alumnoData.nombre || '';
+  pop.classList.add('open');
+  setTimeout(() => { input.focus(); input.select(); }, 30);
+}
+
+function closeNamePopover() {
+  document.getElementById('name-popover')?.classList.remove('open');
+}
+
+function outsideNamePopoverClick(e) {
+  const pop = document.getElementById('name-popover');
+  const badge = document.getElementById('name-badge-btn');
+  if (pop && !pop.contains(e.target) && e.target !== badge && !badge?.contains(e.target)) {
+    pop.classList.remove('open');
+  }
+}
+
+async function guardarNombre() {
+  const input  = document.getElementById('name-input');
+  const saving = document.getElementById('name-saving');
+  const nuevoNombre = input.value.trim();
+
+  if (!nuevoNombre) {
+    saving.textContent = 'El nombre no puede estar vacío.';
+    return;
+  }
+
+  saving.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${alumnoId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ nombre: nuevoNombre })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    alumnoData.nombre = nuevoNombre;
+    saving.textContent = '✓ Guardado';
+    setTimeout(() => {
+      closeNamePopover();
+      renderInfoBar();
+    }, 700);
+
+  } catch(e) {
+    saving.textContent = 'Error: ' + e.message;
+  }
 }
 
 let editingId = null;
