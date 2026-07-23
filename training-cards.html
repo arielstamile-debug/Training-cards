@@ -1500,6 +1500,8 @@ function openEditModal(ex) {
   document.getElementById('edit-reps').value   = ex.r  || '';
   document.getElementById('edit-carga').value  = ex.c  || '';
   document.getElementById('edit-rm').value     = ex.rm || '';
+  document.getElementById('edit-tt').value     = ex.tt || '';
+  document.getElementById('edit-td').value     = ex.td || '';
   document.getElementById('edit-rm-pct').value = 75;
   document.getElementById('rm-pct-label').textContent = '75%';
   document.getElementById('rm-result').innerHTML = 'Carga calculada: <strong>—</strong>';
@@ -1556,6 +1558,8 @@ async function saveEditModal() {
   const reps   = parseFloat(document.getElementById('edit-reps').value)   || 0;
   const carga  = parseFloat(document.getElementById('edit-carga').value)  || 0;
   const rm     = parseFloat(document.getElementById('edit-rm').value)     || null;
+  const tt     = document.getElementById('edit-tt').value.trim();
+  const td     = document.getElementById('edit-td').value.trim();
   const status = document.getElementById('edit-modal-status');
   const btn    = document.querySelector('.edit-modal-save');
 
@@ -1563,7 +1567,7 @@ async function saveEditModal() {
   btn.disabled = true;
 
   try {
-    const body = { series, reps, carga };
+    const body = { series, reps, carga, tiempo_trabajo: tt || null, tiempo_descanso: td || null };
     if (rm !== null) body.rm = rm;
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/ejercicios?id=eq.${editingEx.id}`, {
@@ -1580,7 +1584,7 @@ async function saveEditModal() {
 
     // Update local DB
     const row = DB[selAlumno].rows.find(r => r.id === editingEx.id);
-    if (row) { row.sr = series; row.r = reps; row.c = carga; row.rm = rm; }
+    if (row) { row.sr = series; row.r = reps; row.c = carga; row.rm = rm; row.tt = tt; row.td = td; }
 
     status.className = 'edit-modal-status success';
     status.textContent = '✓ Guardado';
@@ -2086,6 +2090,15 @@ loadFromSupabase();
           </div>
           <div class="rm-result" id="rm-result">Carga calculada: <strong>—</strong></div>
         </div>
+      </div>
+    </div>
+
+    <!-- Tiempos -->
+    <div class="edit-modal-field">
+      <label>Tiempos</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="edit-tt" placeholder="T. Trabajo (ej: 40s)" style="flex:1;padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+        <input type="text" id="edit-td" placeholder="T. Descanso (ej: 60s)" style="flex:1;padding:10px 12px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none">
       </div>
     </div>
 
