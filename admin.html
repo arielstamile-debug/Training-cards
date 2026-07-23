@@ -226,6 +226,9 @@ body{font-family:'Inter',sans-serif;background:#f7f4ef;color:#1a1714;min-height:
           <input type="number" id="ej-series" placeholder="Series" min="1" max="10" title="Series" style="width:70px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
           <input type="number" id="ej-reps" placeholder="Reps" min="1" max="50" title="Reps" style="width:70px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
           <input type="number" id="ej-carga" placeholder="Kg" min="0" step="0.5" title="Carga (kg)" style="width:70px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <div style="width:1px;height:32px;background:#e8e4de;margin:0 2px;flex-shrink:0"></div>
+          <input type="text" id="ej-tt" placeholder="T. Trabajo" title="Tiempo de trabajo" style="width:90px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
+          <input type="text" id="ej-td" placeholder="T. Descanso" title="Tiempo de descanso" style="width:90px;padding:10px 6px;border:1.5px solid #e8e4de;border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center;box-sizing:border-box">
           <button onclick="agregarEjercicio()" style="margin-left:auto;flex-shrink:0;padding:10px 16px;background:#c8a45a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Agregar</button>
         </div>
       </div>
@@ -257,7 +260,7 @@ const headers = {
 let selectedDays = [];
 let currentAlumnoId = null;
 let currentSesiones = [];
-let currentExercicios = {};  // {sesion_id: [{grupo, ejercicio, series, reps, carga}]}
+let currentExercicios = {};  // {sesion_id: [{grupo, ejercicio, series, reps, carga, tiempo_trabajo, tiempo_descanso}]}
 
 // ── DÍAS ──────────────────────────────────────────────────────────────
 function toggleDay(btn, day) {
@@ -391,7 +394,7 @@ function renderExList(sesionId, list) {
       <div style="flex:1">
         <div class="ex-item-grupo">${ex.grupo_muscular}</div>
         <div class="ex-item-name">${ex.ejercicio}</div>
-        <div class="ex-item-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga}kg</div>
+        <div class="ex-item-meta">${ex.series} series · ${ex.reps} reps · ${ex.carga}kg${ex.tiempo_trabajo ? ' · ' + ex.tiempo_trabajo : ''}${ex.tiempo_descanso ? ' / ' + ex.tiempo_descanso : ''}</div>
       </div>
       <button class="ex-delete" onclick="eliminarEjercicio(${sesionId},${i})">✕</button>
     </div>`).join('');
@@ -404,6 +407,8 @@ async function agregarEjercicio() {
   const series   = parseInt(document.getElementById('ej-series').value) || 0;
   const reps     = parseInt(document.getElementById('ej-reps').value) || 0;
   const carga    = parseFloat(document.getElementById('ej-carga').value) || 0;
+  const tt       = document.getElementById('ej-tt').value.trim();
+  const td       = document.getElementById('ej-td').value.trim();
   const status   = document.getElementById('status-3');
 
   if (!grupo || !nombre || !series) {
@@ -420,14 +425,16 @@ async function agregarEjercicio() {
         alumno_id: currentAlumnoId,
         grupo_muscular: grupo,
         ejercicio: nombre,
-        series, reps, carga
+        series, reps, carga,
+        tiempo_trabajo: tt || null,
+        tiempo_descanso: td || null
       })
     });
     if (!res.ok) throw new Error(await res.text());
 
     // Agregar a lista local
     if (!currentExercicios[sesionId]) currentExercicios[sesionId] = [];
-    currentExercicios[sesionId].push({grupo_muscular: grupo, ejercicio: nombre, series, reps, carga});
+    currentExercicios[sesionId].push({grupo_muscular: grupo, ejercicio: nombre, series, reps, carga, tiempo_trabajo: tt || null, tiempo_descanso: td || null});
     renderExList(sesionId, currentExercicios[sesionId]);
 
     // Limpiar campos
@@ -435,6 +442,8 @@ async function agregarEjercicio() {
     document.getElementById('ej-series').value = '';
     document.getElementById('ej-reps').value   = '';
     document.getElementById('ej-carga').value  = '';
+    document.getElementById('ej-tt').value     = '';
+    document.getElementById('ej-td').value     = '';
     document.getElementById('ej-grupo').focus();
 
     showStatus(status, 'success', `✓ ${nombre} agregado.`);
